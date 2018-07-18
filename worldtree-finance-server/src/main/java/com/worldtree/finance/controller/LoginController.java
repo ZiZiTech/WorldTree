@@ -1,6 +1,8 @@
 package com.worldtree.finance.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.aliyuncs.dysmsapi.model.v20170525.SendSmsResponse;
+import com.aliyuncs.exceptions.ClientException;
 import com.worldtree.finance.cache.VCodeCache;
 import com.worldtree.finance.constant.ParamKeys;
 import com.worldtree.finance.entity.UserInfo;
@@ -57,25 +59,25 @@ public class LoginController {
         }
         try {
             String code = vCodeCache.getLoginVCode(phoneNumber, loginVCodeLength);
-            vCodeCache.setLoginVCode(phoneNumber, code);
-            return new Response().success(code);
-//            SendSmsResponse res = alSmsUtils.sendLoginSms(phoneNumber, code);
-//            if ("OK".equals(res.getCode())) {
-//                vCodeCache.setLoginVCode(phoneNumber, code);
-//                return new Response().success();
-//            } else {
-//                StringBuffer sb = new StringBuffer();
-//                sb.append("VCode send error, phone is ");
-//                sb.append(phoneNumber);
-//                sb.append(", Code is ");
-//                sb.append(res.getCode());
-//                sb.append(", Message is ");
-//                sb.append(res.getMessage());
-//                LOGGER.error(sb.toString());
-//                return new Response().error(MessageCode.MSG_V_CODE_SEND_ERROR);
-//            }
-//        } catch (ClientException e) {
-//            throw new FinanceControllerException(MessageCode.MSG_V_CODE_SEND_ERROR);
+//            vCodeCache.setLoginVCode(phoneNumber, code);
+//            return new Response().success(code);
+            SendSmsResponse res = alSmsUtils.sendLoginSms(phoneNumber, code);
+            if ("OK".equals(res.getCode())) {
+                vCodeCache.setLoginVCode(phoneNumber, code);
+                return new Response().success();
+            } else {
+                StringBuffer sb = new StringBuffer();
+                sb.append("VCode send error, phone is ");
+                sb.append(phoneNumber);
+                sb.append(", Code is ");
+                sb.append(res.getCode());
+                sb.append(", Message is ");
+                sb.append(res.getMessage());
+                LOGGER.error(sb.toString());
+                return new Response().error(MessageCode.MSG_V_CODE_SEND_ERROR);
+            }
+        } catch (ClientException e) {
+            throw new FinanceControllerException(MessageCode.MSG_V_CODE_SEND_ERROR);
         } catch (MessageException ex) {
             throw new FinanceControllerException(ex.getMessageCode());
         }
