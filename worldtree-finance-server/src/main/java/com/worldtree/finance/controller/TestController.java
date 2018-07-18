@@ -1,5 +1,6 @@
 package com.worldtree.finance.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.worldtree.finance.exception.FinanceControllerException;
 import com.worldtree.finance.res.MessageCode;
 import com.worldtree.finance.res.Response;
@@ -15,7 +16,9 @@ public class TestController {
     @Autowired
     private TokenUser tokenUser;
     @RequestMapping("test1")
-    public Response test1() throws FinanceControllerException{
-        return new Response().success("User id is " + tokenUser.getUserId());
+    public Response test1() {
+        JSONObject result = new JSONObject();
+        result.put("result", "User id is " + tokenUser.getUserId());
+        return new Response().success(result);
     }
 }

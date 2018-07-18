@@ -60,6 +60,6 @@ public class VCodeCache {
         if (model != null && Calendar.getInstance().getTimeInMillis() - model.getCreateTime() > space) {
             throw new MessageException(MessageCode.MSG_V_CODE_SEND_FREQUENCY_TOO_HIGH);
         }
-        return WTStringUtils.getNumberRandomStringByLength(vCodeLength);
+        return WTStringUtils.getVerificationCode(vCodeLength);
     }
 }

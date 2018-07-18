@@ -60,10 +60,13 @@ public class LoginController {
         try {
             String code = vCodeCache.getLoginVCode(phoneNumber, loginVCodeLength);
 //            vCodeCache.setLoginVCode(phoneNumber, code);
-//            return new Response().success(code);
+//            JSONObject result = new JSONObject();
+//            result.put("vCode", code);
+//            return new Response().success(result);
             SendSmsResponse res = alSmsUtils.sendLoginSms(phoneNumber, code);
             if ("OK".equals(res.getCode())) {
                 vCodeCache.setLoginVCode(phoneNumber, code);
+                LOGGER.info("Phone is " + phoneNumber + ", vCode is " + code);
                 return new Response().success();
             } else {
                 StringBuffer sb = new StringBuffer();
@@ -107,7 +110,9 @@ public class LoginController {
             tokenObject.setUserId(userInfo.getUserId());
             tokenObject.setProject(project);
             tokenObject.setPhoneNumber(phoneNumber);
-        return new Response().success(tokenHelper.generateToken(tokenObject));
+            JSONObject result = new JSONObject();
+            result.put(ParamKeys.KEY_TOKEN, tokenHelper.generateToken(tokenObject));
+            return new Response().success(result);
         } catch (MessageException ex) {
             throw new FinanceControllerException(ex.getMessageCode());
         }
@@ -127,7 +132,9 @@ public class LoginController {
                 tokenObject.setUserId(userId);
                 tokenObject.setProject(project);
                 tokenObject.setPhoneNumber(userInfo.getPhoneNumber());
-                return new Response().success(tokenHelper.generateToken(tokenObject));
+                JSONObject result = new JSONObject();
+                result.put(ParamKeys.KEY_TOKEN, tokenHelper.generateToken(tokenObject));
+                return new Response().success(result);
             } else {
                 return new Response().error(MessageCode.MSG_NOT_REGISTER);
             }

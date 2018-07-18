@@ -32,12 +32,6 @@ public enum MessageCode {
     MSG_EXIST_MEMBER("已经注册的用户,不能创建订单", 30002),
     MSG_SYSTEM_FILE_RELOAD_ERROR("无法重新加载该系统文件", 40001),
     MSG_ERR_NO_SUCH_RESULT("暂无数据",99992),
-    ERR_GETU_REQUEST_EXCEPTION("个图服务器请求出现异常",99993),
-    ERR_DEFAULT_SEARCH_CONDITION_MISS_ERROR("默认的检索条件确实",99994),
-    ERR_DAPA_SERVER_RESPONSE_ERROR("DAPA服务器请求出现问题",99995),
-    ERR_DB_PRIMARY_KEY_ERROR("数据库主键异常", 99996),
-    ERR_FILE_OPERATOR("文件操作出现问题", 99997),
-    ERR_DATA_SERVER_RESPONSE_ERROR("数据服务器请求出现问题",99998),
     ERR_UNKNOWN_EXCEPTION("未知错误",99999);
     // 成员变量
     private String message;

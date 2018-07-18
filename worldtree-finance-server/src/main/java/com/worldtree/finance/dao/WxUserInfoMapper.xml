@@ -25,4 +25,10 @@
     values (#{openId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, now()
       )
   </insert>
+  <update id="updateByPrimaryKey" parameterType="com.worldtree.finance.entity.WxUserInfo">
+    update wx_user_info
+    set user_id = #{userId,jdbcType=INTEGER},
+    add_time = #{addTime,jdbcType=TIMESTAMP}
+    where open_id = #{openId,jdbcType=VARCHAR}
+  </update>
 </mapper>

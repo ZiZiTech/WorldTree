@@ -44,4 +44,9 @@ public class WTStringUtils {
         }
         return sb.toString();
     }
+
+    public static String getVerificationCode(int length){
+        double basic = Math.pow(10, length - 1);
+        return  String.valueOf(new Random().nextInt((int)basic * 9) + (int)basic);
+    }
 }
