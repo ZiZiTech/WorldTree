@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.worldtree.finance.dao.WxUserInfoMapper">
+  <resultMap id="BaseResultMap" type="com.worldtree.finance.entity.WxUserInfo">
+    <id column="open_id" jdbcType="VARCHAR" property="openId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="add_time" jdbcType="TIMESTAMP" property="addTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    open_id, user_id, add_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from wx_user_info
+    where open_id = #{openId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from wx_user_info
+    where open_id = #{openId,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.worldtree.finance.entity.WxUserInfo">
+    insert into wx_user_info (open_id, user_id, add_time
+      )
+    values (#{openId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, now()
+      )
+  </insert>
+</mapper>
