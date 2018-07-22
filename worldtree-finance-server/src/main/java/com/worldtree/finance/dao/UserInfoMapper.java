@@ -12,4 +12,6 @@ public interface UserInfoMapper {
     int updateByPrimaryKey(UserInfo record);
 
     UserInfo selectLastestByPhoneNumber(String phoneNumber);
+
+    Integer getUserIntegral(int userId);
 }

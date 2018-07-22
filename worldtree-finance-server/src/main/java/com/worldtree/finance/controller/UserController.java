@@ -26,11 +26,12 @@ public class UserController {
 
 
     @RequestMapping("getUserInfo")
-    public Response getUserInfo(@RequestBody JSONObject params) {
+    public Response getUserInfo() {
         JSONObject result = new JSONObject();
         UserInfo userInfo = userService.getUserInfoById(tokenUser.getUserId());
         result.put(ParamKeys.KEY_PHONE_NUMBER, userInfo.getPhoneNumber());
         result.put(ParamKeys.KEY_ADDRESS, "江苏省无锡市");
+        result.put(ParamKeys.KEY_INTEGRAL, this.userService.getUserIntegral(tokenUser.getUserId()));
         return new Response().success(result);
     }
 }

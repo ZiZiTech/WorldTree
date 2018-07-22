@@ -21,6 +21,12 @@
     from user_info
     where phone_number = #{phoneNumber,jdbcType=VARCHAR} order by add_time desc limit 1
   </select>
+  <select id="getUserIntegral" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select
+    sum(integral)
+    from trade_record
+    where user_id = #{userId,jdbcType=INTEGER} and trade_status=1
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from user_info
     where user_id = #{userId,jdbcType=INTEGER}

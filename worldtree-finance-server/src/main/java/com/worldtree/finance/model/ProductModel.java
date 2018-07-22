@@ -13,6 +13,8 @@ public class ProductModel {
     private float returns;
     // 积分比例
     private float integral = 1;
+    // 推荐度
+    private int recommend;
 
     public int getId() {
         return id;
@@ -60,5 +62,13 @@ public class ProductModel {
 
     public void setIntegral(float integral) {
         this.integral = integral;
+    }
+
+    public int getRecommend() {
+        return recommend;
+    }
+
+    public void setRecommend(int recommend) {
+        this.recommend = recommend;
     }
 }
