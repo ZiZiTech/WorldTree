@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.worldtree.finance.dao.ProductMapper">
+  <resultMap id="BaseResultMap" type="com.worldtree.finance.entity.Product">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="comment" jdbcType="VARCHAR" property="comment" />
+    <result column="label" jdbcType="VARCHAR" property="label" />
+    <result column="returns" jdbcType="REAL" property="returns" />
+    <result column="integral" jdbcType="REAL" property="integral" />
+    <result column="is_ended" jdbcType="BIT" property="isEnded" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, title, comment, label, returns, integral, is_ended, end_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from product
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByCityId" parameterType="java.lang.Integer" resultType="com.worldtree.finance.model.ProductModel">
+    select
+    pro.id, pro.title, pro.comment, pro.label, pro.returns, pro.integral, cpro.recommend
+    from product pro, city_product cpro
+    where cpro.city_id= #{cityId,jdbcType=INTEGER} and pro.id=cpro.product_id and pro.is_ended=false
+    and cpro.is_ended=false and cpro.start_time <![CDATA[ < ]]> now()
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from product
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.worldtree.finance.entity.Product">
+    insert into product (id, title, comment, 
+      label, returns, integral, 
+      is_ended, end_time)
+    values (#{id,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{comment,jdbcType=VARCHAR}, 
+      #{label,jdbcType=VARCHAR}, #{returns,jdbcType=REAL}, #{integral,jdbcType=REAL}, 
+      #{isEnded,jdbcType=BIT}, #{endTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.worldtree.finance.entity.Product">
+    update product
+    set title = #{title,jdbcType=VARCHAR},
+      comment = #{comment,jdbcType=VARCHAR},
+      label = #{label,jdbcType=VARCHAR},
+      returns = #{returns,jdbcType=REAL},
+      integral = #{integral,jdbcType=REAL},
+      is_ended = #{isEnded,jdbcType=BIT},
+      end_time = #{endTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

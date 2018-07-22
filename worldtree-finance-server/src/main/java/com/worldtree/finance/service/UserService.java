@@ -15,4 +15,6 @@ public interface UserService {
     UserInfo createUser(String phoneNumber);
 
     void saveOrUpdateWxUser(String openId, int userId);
+
+    int getUserIntegral(int userId);
 }

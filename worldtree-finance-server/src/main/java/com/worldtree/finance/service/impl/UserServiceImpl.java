@@ -65,4 +65,10 @@ public class UserServiceImpl implements UserService {
             this.wxUserInfoMapper.updateByPrimaryKey(wxUserInfo);
         }
     }
+
+    @Override
+    public int getUserIntegral(int userId) {
+        Integer integral = this.userInfoMapper.getUserIntegral(userId);
+        return integral == null ? 0 : integral;
+    }
 }
