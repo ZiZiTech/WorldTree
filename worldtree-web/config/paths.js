@@ -44,6 +44,7 @@ const appArr = [
     'helper',
     'login',
     'register',
+    'pcenter'
 ];
 
 // config after eject: we're in ./config/
