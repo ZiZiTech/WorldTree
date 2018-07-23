@@ -24,7 +24,7 @@ module.exports = {
     },
 
     api: {  // 对后端请求的相关配置
-        host: 'http://10.250.250.116/ai/conversations',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
+        host: 'http://112.124.2.192:8080/finance',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
         path: '',  // ajax请求的路径
         timeout: 150000,  // 请求的超时时间, 单位毫秒
     },

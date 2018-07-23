@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
-import './App.css';
+import './PCenter.css';
 import {Flex} from "antd-mobile";
 import head from './head.png'
-import Util from "../utils";
+import {isWeixin} from "../utils";
 
-class App extends Component {
+class PCenter extends Component {
     constructor(props) {
         super(props);
 
@@ -32,7 +32,7 @@ class App extends Component {
     // }
 
     render() {
-        Util.isWeixin();
+        isWeixin();
 
         return (
             <div>
@@ -54,4 +54,4 @@ class App extends Component {
     }
 }
 
-export default App;
+export default PCenter;

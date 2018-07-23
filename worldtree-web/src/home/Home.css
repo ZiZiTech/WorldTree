@@ -39,6 +39,20 @@
     background: linear-gradient(to bottom, #ffffff 0%, #efebe0 100%);
 }
 
+.townContainer {
+    text-align: center;
+    background: url(../images/sl_18.jpg);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    -webkit-background-origin: content-box; /* Safari */
+    background-origin: content-box;
+}
+
+.townContainer .flex-container .inline {
+    width: 65px;
+    height: 65px;
+}
+
 @keyframes App-logo-spin {
     from {
         transform: rotate(0deg);

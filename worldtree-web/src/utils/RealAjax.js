@@ -1,8 +1,8 @@
-import Logger from './Logger';
+// import Logger from './Logger';
 import superagent from 'superagent';
 import globalConfig from '../config';
 
-const logger = new Logger('Ajax');
+// const logger = new Logger('Ajax');
 
 /**
  * 封装所有ajax逻辑, 为了配合async/await, 所有ajax请求都要返回promise对象
@@ -27,7 +27,7 @@ class Ajax {
      * @returns {Promise}
      */
     requestWrapper(method, url, {params, data, headers} = {}) {
-        logger.debug('method=%s, url=%s, params=%o, data=%o, headers=%o', method, url, params, data, headers);
+        // logger.debug('method=%s, url=%s, params=%o, data=%o, headers=%o', method, url, params, data, headers);
         return new Promise((resolve, reject) => {
             const tmp = superagent(method, url);
             // 是否是跨域请求
@@ -56,7 +56,7 @@ class Ajax {
             }
             // 包装成promise
             tmp.end((err, res) => {
-                logger.debug('err=%o, res=%o', err, res);
+                // logger.debug('err=%o, res=%o', err, res);
                 // 我本来在想, 要不要在这里把错误包装下, 即使请求失败也调用resolve, 这样上层就不用区分"网络请求成功但查询数据失败"和"网络失败"两种情况了
                 // 但后来觉得这个ajax方法是很底层的, 在这里包装不合适, 应该让上层业务去包装
                 if (res && res.body) {
@@ -75,12 +75,31 @@ class Ajax {
     }
 
     post(url, data, opts = {}) {
-        const headers = {'Content-Type': 'application/json'};
+        const headers = {'Content-Type': 'application/json',"FinanceAuth":"Worldtree-eyJhbGciOiJIUzUxMiJ9.eyJwaG9uZU51bWJlciI6IjE4NjY4MDE4NjMzIiwicHJvamVjdCI6ImZpbmFuY2UiLCJleHAiOjE1MzIyNjU2MjgsInVzZXJJZCI6NX0.jjYM5bEnS8eId6voAsl00DV6EYrPEYyl8TXAmCMENXrRex1FSNhoR1HIw3zK-3ptQXp6QZarMelDEi9AEmdqqA"};
         console.log("post data = " + JSON.stringify(data));
         return this.requestWrapper('POST', url, {...opts, data, headers});
     }
 
     // 业务方法
+    //openId登录
+    loginByOpenId(openId) {
+        return this.post(`${globalConfig.getAPIPath()}login/loginByOpenId`, {"openId": openId});
+    }
+
+    //获取验证码
+    getSmsCode(phoneNumber) {
+        return this.post(`${globalConfig.getAPIPath()}login/getLoginCode`, {"phoneNumber": phoneNumber});
+    }
+
+    //绑定手机号
+    bindWechat(params) {
+        return this.post(`${globalConfig.getAPIPath()}login/login`, {
+            "vCode": params.vCode,
+            "phoneNumber": params.phoneNumber,
+            "openId": params.openId,
+        });
+    }
+
     sendParseRequest(newMessage) {
         return this.post(`${globalConfig.getAPIPath()}${newMessage.sendId}/parse`, {"q": newMessage.message});
     }

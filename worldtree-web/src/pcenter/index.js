@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import PCenter from './PCenter';
 
-ReactDOM.render(<div><div>个人中心</div><App/></div>, document.getElementById('root'));
+ReactDOM.render(<div><div>个人中心</div><PCenter/></div>, document.getElementById('root'));
