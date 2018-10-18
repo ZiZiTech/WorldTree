@@ -96,7 +96,7 @@ class Login extends Component {
                         <InputItem
                             clear
                             type="phone"
-                            placeholder="手机号"
+                            placeholder="_ _ _ _ _ _ _ _ _ _ _ _"
                             value={this.state.phone}
                             onChange={this.handlePhoneChange}
                         >手机号</InputItem>

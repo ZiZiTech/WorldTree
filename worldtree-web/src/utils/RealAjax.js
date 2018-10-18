@@ -32,8 +32,10 @@ class Ajax {
             const tmp = superagent(method, url);
             // 是否是跨域请求
             if (globalConfig.isCrossDomain()) {
+                console.log("isCrossDomainisCrossDomainisCrossDomain")
                 tmp.withCredentials();
-                tmp.set('Access-Control-Allow-Origin', "http://10.250.250.116/");
+                // tmp.set('Access-Control-Allow-Origin', "http://192.168.202.234:3000/");
+                // tmp.set('Access-Control-Allow-Credentials', 'true')
             }
             // 设置全局的超时时间
             if (globalConfig.api.timeout && !isNaN(globalConfig.api.timeout)) {
@@ -69,16 +71,27 @@ class Ajax {
     }
 
     // 基础的get/post方法
-
     get(url, opts = {}) {
         return this.requestWrapper('GET', url, {...opts});
     }
 
     post(url, data, opts = {}) {
-        const headers = {'Content-Type': 'application/json',"FinanceAuth":"Worldtree-eyJhbGciOiJIUzUxMiJ9.eyJwaG9uZU51bWJlciI6IjE4NjY4MDE4NjMzIiwicHJvamVjdCI6ImZpbmFuY2UiLCJleHAiOjE1MzIyNjU2MjgsInVzZXJJZCI6NX0.jjYM5bEnS8eId6voAsl00DV6EYrPEYyl8TXAmCMENXrRex1FSNhoR1HIw3zK-3ptQXp6QZarMelDEi9AEmdqqA"};
+        const headers = {
+            'Content-Type': 'application/json',
+        };
         console.log("post data = " + JSON.stringify(data));
         return this.requestWrapper('POST', url, {...opts, data, headers});
     }
+
+    postWithToken(url, data, token, opts = {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            "FinanceAuth": token
+        };
+        console.log("post data = " + JSON.stringify(data));
+        return this.requestWrapper('POST', url, {...opts, data, headers});
+    }
+
 
     // 业务方法
     //openId登录
@@ -100,21 +113,79 @@ class Ajax {
         });
     }
 
-    sendParseRequest(newMessage) {
-        return this.post(`${globalConfig.getAPIPath()}${newMessage.sendId}/parse`, {"q": newMessage.message});
+    //获取项目详情
+    getProductDetail(productCode, saleId, openId, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getProductDetail`, {
+            "productCode": productCode,
+            "openId": openId,
+            "saleId": saleId
+        }, token);
     }
 
-    sendContinueRequest(action) {
-        return this.post(`${globalConfig.getAPIPath()}${action.sendId}/continue`,
-            {
-                "executed_action": action.nextAction,
-                "events": []
-            });
+    //验证邀请码
+    verifyInvitationCode(productCode, saleId, openId, invitationCode, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getProductDetail`, {
+            "productCode": productCode,
+            "openId": openId,
+            "saleId": saleId,
+            "invitationCode": invitationCode,
+        }, token);
     }
 
-    cleanChatRequest(sendId) {
-        return this.post(`${globalConfig.getAPIPath()}${sendId}/continue`,
-            {"executed_action": "action_restart", "events": [{"event": "restart"}]})
+    //获取产品是否被关注
+    getAttentionProduct(productCode, saleId, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getAttentionProduct`, {
+            "productCode": productCode,
+            "saleId": saleId
+        }, token);
+    }
+
+    //关注产品
+    attentionProduct(productCode, saleId, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/attentionProduct`, {
+            "productCode": productCode,
+            "saleId": saleId
+        }, token);
+    }
+
+    //判断产品是否被预约
+    getProductBookStatus(productCode, saleId, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/getProductBooked`, {
+            "productCode": productCode,
+            "saleId": saleId
+        }, token);
+    }
+
+    //预约产品
+    bookProduct(productCode, saleId, bookCount, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/attentionProduct`, {
+            "productCode": productCode,
+            "saleId": saleId,
+            "bookCount": bookCount,
+        }, token);
+    }
+
+    //获取用户是否认证
+    getUserCertification(token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}finance/user/getUserCertification`, {}, token);
+    }
+
+    //用户认证
+    certificationUser(data, token) {
+        return this.postWithToken(`${globalConfig.getAPIPath()}finance/user/certificationUser`,
+            data, token);
+    }
+
+    //身份证识别
+    recognizeID(data) {
+        const headers = {
+            "Authorization": "APPCODE 30cdc788760a48f5ba391c22473b396c",
+        };
+        console.log("post data = " + JSON.stringify(data));
+        return this.requestWrapper('POST', `http://127.0.0.1:8089/rec/rest/160601/ocr/ocr_idcard.json`, {
+            data,
+            headers
+        });
     }
 }
 

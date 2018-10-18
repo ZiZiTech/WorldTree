@@ -1,4 +1,4 @@
-'use strict';
+
 
 const path = require('path');
 const fs = require('fs');
@@ -44,7 +44,8 @@ const appArr = [
     'helper',
     'login',
     'register',
-    'pcenter'
+    'pcenter',
+    'product_info'
 ];
 
 // config after eject: we're in ./config/

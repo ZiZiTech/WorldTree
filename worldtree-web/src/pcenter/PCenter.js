@@ -32,7 +32,7 @@ class PCenter extends Component {
     // }
 
     render() {
-        isWeixin();
+        // isWeixin();
 
         return (
             <div>

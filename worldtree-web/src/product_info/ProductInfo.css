@@ -1,0 +1,148 @@
+.am-navbar {
+    background-color: #353EA4;
+}
+
+html, body, .page {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+a {
+    color: #ffffff;
+}
+
+.title, .content, .footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+.title {
+    top: 0;
+    z-index: 1;
+    height: 65px;
+    background-color: #353EA4;
+}
+
+.content {
+    top: 65px;
+    bottom: 0px;
+    overflow: auto;
+}
+
+.footer {
+    bottom: 0;
+    z-index: 1;
+    height: 50px;
+    background: #00f;
+}
+
+.product-card-db {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.product-card-container {
+    margin: 5px 5px 5px 5px;
+    position: relative;
+}
+
+.product-card-body {
+    padding: 5px;
+    border: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.product-status-tag {
+    -webkit-transform-origin-x: 0;
+    -webkit-transform: scale(0.70);
+    font-size: 12px;
+    padding: 2px;
+    border-radius: 5px;
+    border: 1px solid #fe8f1e;
+    float: left;
+    background-color: transparent;
+    color: #fe8f1e;
+    text-align: center;
+    line-height: 100%;
+}
+
+.small-font-size {
+    -webkit-transform-origin-x: 0;
+    -webkit-transform: scale(0.70);
+    font-size: 12px;
+}
+
+span {
+    color: #ffffff;
+}
+
+.attentionButton {
+    border: none;
+    height: 40px;
+    background: url(./selector-attention-normal.png);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    width: 90%;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.attentionButton:active {
+    border: none;
+    background: url(./selector-attention-pressed.png);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    font-size: 12px;
+}
+
+.attentionButton:disabled {
+    border: none;
+    background: url(./selector-attention-pressed.png);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    font-size: 12px;
+}
+
+.invitationCode {
+    color: #3A359D;
+    background-color: #f1efff;
+    height: 30px;
+    line-height: 30px;
+    width: 90%;
+    border: 1px solid #d8d4ff;
+    border-radius: 25px;
+    text-align: center;
+}
+
+.invitationCodeButton {
+    background-color: #3A359D;
+    border-radius: 25px;
+    border: 1px solid #1b2075;
+    height: 40px;
+    width: 70%;
+    color: #ffffff;
+}
+
+.invitationCodeButton:active {
+    background-color: #170f9d;
+    color: #efefef;
+}
+
+.invitationCodeButton:disabled {
+    border-color: #dbdbdb;
+    color: #848484;
+    background-color: #eeeeee;
+}
+
+.am-modal-content {
+    background-image: url(bg-modal.png);
+    background-size: cover;
+    background-color: transparent;
+}

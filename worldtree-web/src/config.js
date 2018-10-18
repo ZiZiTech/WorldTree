@@ -8,12 +8,11 @@
 // 遵循统一的规范, 好维护, 交给其他人也比较简单
 module.exports = {
 
-    name: '保险卡片管理后台',  // 项目的名字
+    name: '',  // 项目的名字
     favicon: 'http://jxy.me/favicon.ico',  // 设置网页的favicon, 可以是外链, 也可以是本地
-    footer: '<a target="_blank" href="#">金蝉文化传媒 </a>版权所有 © 2017-2017',  // footer中显示的字, 可以嵌入html标签
-
+    footer: '<a target="_blank" href="#">大衍金融 </a>版权所有 © 2017-2017',  // footer中显示的字, 可以嵌入html标签
+    token: '',
     debug: false,  // 是否开启debug模式, 不会请求后端接口, 使用mock的数据
-
     log: {
         level: 'debug',  // 日志级别, 类似slf4j中的root logger, 目前支持debug/info/warn/error 4种级别
         // 除了root logger以外, 也可以为每个logger单独设置级别
@@ -24,7 +23,7 @@ module.exports = {
     },
 
     api: {  // 对后端请求的相关配置
-        host: 'http://112.124.2.192:8080/finance',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
+        host: 'http://127.0.0.1:8089/api/finance',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
         path: '',  // ajax请求的路径
         timeout: 150000,  // 请求的超时时间, 单位毫秒
     },
@@ -60,6 +59,7 @@ module.exports = {
      * @returns {boolean}
      */
     isCrossDomain() {
+        return true;
         if (this.api.host && this.api.host !== '') {
             return true;
         } else {

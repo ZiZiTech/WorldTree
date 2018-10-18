@@ -1,0 +1,67 @@
+.card-db {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+/*.am-card-body {*/
+/*padding: 10px 10px 10px;*/
+/*background-image: url(bg-top.png);*/
+/*background-size: cover;*/
+/*border: none;*/
+/*}*/
+
+/*.am-progress-outer {*/
+    /*background-color: #2F3F75;*/
+    /*border-radius: 5px 5px 5px 5px;*/
+/*}*/
+
+/*.am-progress-bar {*/
+    /*border: 4px solid #FCB53F;*/
+    /*border-radius: 5px 0px 0px 5px;*/
+/*}*/
+
+.card-container {
+    width: 100%;
+    /*text-align: center;*/
+}
+
+.card-body {
+    margin: 5px 7px 0px 7px;
+    height: 85px;
+    padding: 10px 10px 10px;
+    background-image: url(bg-top.png);
+    background-repeat: no-repeat;
+    background-size: 100%;
+    border: none;
+}
+
+.card-foot {
+    margin: 0px 7px 5px 7px;
+    line-height: 32px;
+    text-align: center;
+    height: 32px;
+    background-image: url(bg-bottom.png);
+    background-repeat: no-repeat;
+    background-size: 100%;
+    border: none;
+    font-size: 80%;
+}
+
+.status-tag {
+    -webkit-transform-origin-x: 0;
+    -webkit-transform: scale(0.60);
+    font-size: 12px;
+    padding: 2px;
+    border-radius: 5px;
+    border: 1px solid #fe8f1e;
+    float: left;
+    background-color: transparent;
+    color: #fe8f1e;
+    text-align: center;
+    line-height: 100%;
+}
+
+span {
+    color: #ffffff;
+}
