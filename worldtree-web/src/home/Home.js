@@ -1,10 +1,7 @@
-'use strict';
-
 import React, {Component} from 'react';
-import ReactDOM from 'react-dom';
 import './Home.css';
 import {
-    ListView,
+    Toast,
     NavBar,
     Flex,
     Icon,
@@ -12,31 +9,40 @@ import {
     List,
     WingBlank,
     WhiteSpace,
-    Modal, Stepper, ImagePicker
+    Modal, Stepper
 } from "antd-mobile";
-import {isWeixin, Trim, ValidateMobile} from "../utils";
+import EXIF from 'exif-js'
+import {isWeixin, Trim, ValidateMobile, GetQueryString} from "../utils";
 import ajax from "../utils/ajax";
-import head from './head.png'
+import head from './images/head.png'
 import ProductItem from "../compont/ProductItem";
 import CodeBox from "../compont/CodeBox"
-import {district, provinceLite} from 'antd-mobile-demo-data';
-import IconMine from './icon-mine.png'
+import IconMine from './images/icon-mine.png'
 
-import IconLocation from './icon-location.png'
-import IconLocationBlack from './icon-location-black.png'
-import IconLogo from './icon-logo.png'
-import IconBook from './icon-book.png'
-import IconLogout from './icon-logout.png'
-import IconAttention from './icon-attention.png'
-import IconRealName from './icon-realname.png'
-import ImageProductDetail01 from './image-product-detail01.png'
-import BgProductItem from './bg-product-item.png'
+import IconLocation from './images/icon-location.png'
+import IconLocationBlack from './images/icon-location-black.png'
+import IconLogo from './images/icon-logo.png'
+import IconBook from './images/icon-book.png'
+import IconAttention from './images/icon-attention.png'
+import IconRealName from './images/icon-realname.png'
+import ImageProductDetail01 from './images/image-product-detail01.png'
+import BgProductItem from './images/bg-product-item.png'
+import BgUploadId from './images/bg-upload-id.png'
 
 const Item = List.Item;
 
 const smsRequestInterval = 60;
 const saleId = 1;
 const productCode = "100010000";
+const totalCount = 300;
+const eachCountFigure = 20000;
+const code = GetQueryString('code')
+const nav_to = GetQueryString('nav_to')
+
+
+const maxSize = 10 * 1024; // 10MB
+const typeArray = ['jpeg', 'jpg', 'png'];
+
 // const Wechat = require('wechat-jssdk');
 // const wechatConfig = require('../wechat-config');
 // const wx = new Wechat(wechatConfig);
@@ -55,6 +61,7 @@ function closest(el, selector) {
 class Home extends Component {
     constructor(props) {
         super(props);
+        console.log(JSON.stringify(this));
         this.state = {
             //控制页面显示标记
             toHome: true,
@@ -77,9 +84,11 @@ class Home extends Component {
             phone: 18,
             phoneIsCorrect: false,
             showCode: false,
+            smsCode: '',
+            smsCodeIsCorrect: false,
 
             //用户凭证
-            openId: 'wjswr123',
+            // openId: 'wjswr123',
             token: '',
 
             //是否完成实名认证
@@ -87,16 +96,24 @@ class Home extends Component {
 
             //预约份额
             bookCount: 1,
+            bookTime: '',
 
             //是否关注了saleId为1的产品
             attentionSale: false,
             //是否预约了saleId为1的产品
             bookSale: false,
             //身份证
-            faceIdImages: [],
+            faceIdImageBase64Data: '',
+            faceImageLoaded: false,
             faceRecognized: false,
-            backIdImages: [],
-            backRecognize: false,
+            backIdImageBase64Data: '',
+            backRecognized: false,
+            backImageLoaded: false,
+
+            //总预约份数
+            totalBookedCount: 0,
+            //我预约份数
+            myBookedCount: 0,
         };
 
         this.showPage = this.showPage.bind(this);
@@ -105,7 +122,6 @@ class Home extends Component {
         this.tick = this.tick.bind(this);
         this.getSmsCode = this.getSmsCode.bind(this);
         this.showOrCloseCodeInputView = this.showOrCloseCodeInputView.bind(this);
-        this.tryToLogin = this.tryToLogin.bind(this);
         this.toProjectDetail = this.toProjectDetail.bind(this);
         this.checkUserCertificationStatus = this.checkUserCertificationStatus.bind(this);
         this.onBookCountChange = this.onBookCountChange.bind(this);
@@ -120,31 +136,92 @@ class Home extends Component {
         this.onFaceIDImagesChange = this.onFaceIDImagesChange.bind(this);
         this.onBackIDImagesChange = this.onBackIDImagesChange.bind(this);
         this.handleRecognize = this.handleRecognize.bind(this);
+        this.transformFileToDataUrl = this.transformFileToDataUrl.bind(this);
+        this.previewResponse = this.previewResponse.bind(this);
+
     }
 
-    handleRecognize(data, side) {
-        this.recognizeID(data).catch((err) => {
+    previewResponse(res) {
+        if (res == undefined) {
+            Toast.fail("服务器出错");
+            return;
+        } else {
+            if (res.code === 10001) {
+                Toast.info("请先登录");
+                this.showPage('toLogin')
+                return;
+            }
+        }
+    }
+
+    handleRecognize() {
+        if (this.state.backIdImageBase64Data === '') {
+            Toast.fail("请上传身份证国徽面");
+            return;
+        }
+
+        if (this.state.faceIdImageBase64Data === '') {
+            Toast.fail("请上传身份证头像面");
+            return;
+        }
+        const backData =
+            {
+                "configure": "{\"side\":\"back\"}",
+                "image": this.state.backIdImageBase64Data.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', '').replace('data:image/jpg;base64,', ''),
+            };
+
+
+        this.recognizeID(backData).catch(async (err) => {
             console.log(JSON.stringify(err.text));
             const recognizeInfo = JSON.parse(err.text);
             console.log(JSON.stringify(recognizeInfo));
             //识别成功
             if (recognizeInfo != undefined) {
                 if (recognizeInfo.success) {//识别成功
-                    switch (side) {
-                        case 'face':
-                            this.setState({});
-                            break
-                        case 'back':
-                            this.setState({});
-                            break
-                        default:
-                            break
-                    }
-                } else {//识别失败
+                    const faceData =
+                        {
+                            "configure": "{\"side\":\"face\"}",
+                            "image": this.state.faceIdImageBase64Data.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
+                        };
+                    this.recognizeID(faceData).catch(async (err2) => {
+                        console.log(JSON.stringify(err2.text));
+                        const recognizeInfo2 = JSON.parse(err2.text);
+                        console.log(JSON.stringify(recognizeInfo2));
+                        if (recognizeInfo2 != undefined) {
+                            if (recognizeInfo2.success) {//识别成功
+                                const idInfos =
+                                    {
+                                        "idNumber": recognizeInfo2.num,
+                                        "name": recognizeInfo2.name,
+                                        "sex": recognizeInfo2.sex,
+                                        "address": recognizeInfo2.address,
+                                        "birthday": recognizeInfo2.birth,
+                                        "idCardStartDate": recognizeInfo.start_date,
+                                        "idCardEndDate": recognizeInfo.end_date,
+                                    }
 
+                                const res = await ajax.certificationUser(idInfos);
+                                if (res != undefined && res.code === 10000) {
+                                    Toast.info("识别成功");
+                                    this.setState({
+                                        faceRecognized: true,
+                                        backRecognized: true,
+                                    })
+                                } else {
+                                    Toast.fail("识别失败")
+                                }
+                            } else {//识别失败
+                                Toast.info("身份证头像面识别失败");
+                            }
+                        } else {//识别失败
+                            Toast.info("身份证头像面识别失败");
+                        }
+                    });
+                } else {//识别失败
+                    Toast.info("身份证国徽面识别失败");
                 }
             } else {//识别失败
-
+                Toast.info("身份证国徽面识别失败");
             }
         });
     }
@@ -154,53 +231,154 @@ class Home extends Component {
         console.log("recognizeID res = " + JSON.stringify(res));
     }
 
-    onFaceIDImagesChange(files, type, index) {
-        this.onIDImagesChange(files, type, index, 'face');
+    onFaceIDImagesChange(event) {
+        this.onIDImagesChange(event, 'face');
     }
 
-    onBackIDImagesChange(files, type, index) {
-        this.onIDImagesChange(files, type, index, 'back');
+    onBackIDImagesChange(event) {
+        this.onIDImagesChange(event, 'back');
     }
 
-    onIDImagesChange(files, type, index, side) {
-        console.log(files, type, index, side);
+    transformFileToDataUrl(file) {
+        /**
+         * 图片上传流程的第一步
+         * @param data file文件
+         */
+        return new Promise((resolve, reject) => {
+            let orientation;
+
+            // 封装好的函数
+            const reader = new FileReader();
+
+            // ⚠️ 这是个回调过程 不是同步的
+            reader.onload = function (e) {
+                const result = e.target.result;
+
+                EXIF.getData(file, function () {
+                    EXIF.getAllTags(this);
+                    orientation = EXIF.getTag(this, 'Orientation');
+                    resolve(result, orientation);
+                });
+
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    onIDImagesChange(event, side) {
+        console.log(JSON.stringify(event.target.files));
+        const selectedFiles = Array.prototype.slice.call(event.target.files).map((item) => (item));
+        console.log(JSON.stringify(selectedFiles))
+        let imgPass = {typeError: false, sizeError: false};
+
+        // 循环遍历检查图片 类型、尺寸检查
+        selectedFiles.map((item) => {
+            // 图片类型检查
+            if (typeArray.indexOf(item.type.split('/')[1]) === -1) {
+                imgPass.typeError = true;
+            }
+            // 图片尺寸检查
+            if (item.size > maxSize * 1024) {
+                imgPass.sizeError = true;
+            }
+        });
+
+        // 有错误跳出
+        if (imgPass.typeError) {
+            Toast.fail('不支持文件类型');
+            switch (side) {
+                case 'face':
+                    this.refs.uploadFace.value = null;
+                    break
+                case 'back':
+                    this.refs.uploadBack.value = null;
+                    break
+                default:
+                    break
+            }
+            return;
+        }
+
+        if (imgPass.sizeError) {
+            Toast.fail('文件大小超过限制');
+            switch (side) {
+                case 'face':
+                    this.refs.uploadFace.value = null;
+                    break
+                case 'back':
+                    this.refs.uploadBack.value = null;
+                    break
+                default:
+                    break
+            }
+            return;
+        }
+
+        const image = selectedFiles[0];
+
+        if (image == undefined && image === '') {
+            return;
+        }
+
+        let vUploadImageKey = '';
+        let vUploadImageFlagKey = '';
+
         switch (side) {
             case 'face':
-                this.setState({
-                    faceIdImages: files,
-                }, () => {
-                    if (files.length > 0) {
-                        const data =
-                            {
-                                "configure": "{\"side\":\"face\"}",
-                                "image": files[0].url.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
-                            };
-                        this.handleRecognize(data, side);
-                    }
-                });
-                break;
+                vUploadImageFlagKey = 'faceImageLoaded';
+                vUploadImageKey = 'faceIdImageBase64Data';
+                break
             case 'back':
-                this.setState({
-                    backIdImages: files,
-                }, () => {
-                    if (files.length > 0) {
-                        const data =
-                            {
-                                "configure": "{\"side\":\"back\"}",
-                                "image": files[0].url.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
-                            };
-                        this.handleRecognize(data, side);
-                    }
-                });
-                break;
+                vUploadImageFlagKey = 'backImageLoaded';
+                vUploadImageKey = 'backIdImageBase64Data';
+                break
             default:
                 break
         }
+
+        this.transformFileToDataUrl(image)
+            .then((data) => {
+                console.log(data)
+                this.setState({
+                    [vUploadImageKey]: data,
+                    [vUploadImageFlagKey]: true,
+                })
+            });
+
+        // switch (side) {
+        //     case 'face':
+        //         this.setState({
+        //             faceIdImages: vFiles,
+        //         }, () => {
+        //             if (vFiles.length > 0) {
+        //
+        //             }
+        //         });
+        //         break;
+        //     case 'back':
+        //         this.setState({
+        //             backIdImages: vFiles,
+        //         }, () => {
+        //             if (vFiles.length > 0) {
+        //                 const data =
+        //                     {
+        //                         "configure": "{\"side\":\"back\"}",
+        //                         "image": vFiles[0].url.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
+        //                     };
+        //                 this.handleRecognize(data, side);
+        //             }
+        //         });
+        //         break;
+        //     default:
+        //         break
+        // }
     }
 
     async bookProduct() {
-        const res = await ajax.bookProduct(productCode, saleId, this.state.bookCount, this.state.token);
+        const res = await ajax.bookProduct(productCode, saleId, this.state.bookCount);
         console.log("bookProduct res = " + JSON.stringify(res));
+        this.previewResponse(res);
         let vBookSale = false;
         if (res.code != undefined && res.code === 10000) {
             vBookSale = true;
@@ -213,47 +391,54 @@ class Home extends Component {
     }
 
     async tryToAttentionProductDetail() {
-        const res = await ajax.getProductBookStatus(productCode, saleId, this.state.token);
-        console.log("tryToBookProductList res = " + JSON.stringify(res));
-        let vBookSale = true;
-        if (res.code != undefined && !res.result.booked) {
-            vBookSale = false;
+        const res = await ajax.getProductBookStatus(productCode, saleId);
+        console.log("tryToAttentionProductDetail res = " + JSON.stringify(res));
+        this.previewResponse(res);
+        if (res != undefined && res.code === 10000) {
+            this.setState({
+                bookSale: res.result.booked,
+            }, () => {
+                console.log("tryToBookProductList bookTime = " +this.state.bookTime);
+                this.showPage('toAttentionProductDetail')
+            });
+        } else {
+            Toast.info("请求出错");
         }
-        this.setState({
-            bookSale: vBookSale,
-        }, () => {
-            this.showPage('toAttentionProductDetail')
-        })
     }
 
     async tryToAttentionProductList() {
-        const res = await ajax.getProductDetail(productCode, saleId, this.state.openId, this.state.token);
+        const res = await ajax.getProductDetail(productCode, saleId);
         console.log("tryToAttentionProductList res = " + JSON.stringify(res));
-        let vAttentionSale = true;
-        if (res.code != undefined && !res.result.attention) {
-            vAttentionSale = false;
+        this.previewResponse(res);
+        if (res != undefined && res.code === 10000) {
+            this.setState({
+                attentionSale: res.result.attention,
+                totalBookedCount: res.result.bookedCount,
+            }, () => {
+                this.showPage('toAttentionProductList')
+            })
+        } else {
+            console.log("请求失败");
         }
-        this.setState({
-            attentionSale: vAttentionSale,
-        }, () => {
-            this.showPage('toAttentionProductList')
-        })
     }
 
     async tryToBookProductList() {
-        const res = await ajax.getProductBookStatus(productCode, saleId, this.state.token);
+        const res = await ajax.getProductBookStatus(productCode, saleId);
         console.log("tryToBookProductList res = " + JSON.stringify(res));
-        let vBookSale = true;
-        if (res.code != undefined && !res.result.booked) {
-            vBookSale = false;
+        this.previewResponse(res);
+        if (res != undefined && res.code === 10000) {
+            this.setState({
+                bookSale: res.result.booked,
+                myBookedCount: res.result.bookCount,
+                bookTime: res.result.bookTime,
+            }, () => {
+                this.showPage('toBookedProductList')
+            })
+        } else {
+            console.log("请求失败");
         }
-        this.setState({
-            bookSale: vBookSale,
-        }, () => {
-            this.showPage('toBookedProductList')
-        })
-    }
 
+    }
 
     /**
      * 验证邀请码
@@ -262,13 +447,14 @@ class Home extends Component {
     async verifyInvitationCode() {
         const {invitationCode} = this.state;
         if (invitationCode != undefined && '' !== invitationCode) {
-            const res = await ajax.verifyInvitationCode(productCode, saleId, this.state.openId, invitationCode, this.state.token);
+            const res = await ajax.verifyInvitationCode(productCode, saleId, invitationCode);
             console.log("verifyInvitationCode res = " + JSON.stringify(res));
+            this.previewResponse(res);
             if (res != undefined && res.code === 10000) {
                 if (typeof window !== undefined) {
-                    window.location.href = "../product_info.html?p_id=1";
+                    window.location.href = "./product_info.html?p_id=1";
                 } else {
-                    alert("系统异常")
+                    Toast.info("系统异常")
                 }
             } else {
                 this.setState({
@@ -276,7 +462,7 @@ class Home extends Component {
                 })
             }
         } else {
-            alert("验证码不能为空")
+            Toast.info("验证码不能为空")
         }
     }
 
@@ -307,8 +493,9 @@ class Home extends Component {
      */
     async checkUserCertificationStatus() {
         console.log("checkUserCertificationStatus")
-        const res = await ajax.getUserCertification(this.state.token);
+        const res = await ajax.getUserCertification();
         console.log("checkUserCertificationStatus res = " + JSON.stringify(res));
+        this.previewResponse(res);
         let vUserCertification = false;
         if (res != undefined && res.code === 10000 && res.result.userCertification) {
             vUserCertification = true;
@@ -324,32 +511,17 @@ class Home extends Component {
      */
     async toProjectDetail() {
         console.log("toProjectDetail")
-        if (this.state.token != '' && this.state.token != undefined) {
-            const res = await ajax.getProductDetail(productCode, saleId, this.state.openId, this.state.token);
-            console.log("getProductDetail res = " + JSON.stringify(res));
-            if (res.code != undefined && res.code === 11003) {
-                this.setState({
-                    invitationCodeModal: true,
-                })
-            } else {
-                if (typeof window !== undefined) {
-                    window.location.href = "../product_info.html?p_id=1";
-                }
-            }
+        const res = await ajax.getProductDetail(productCode, saleId);
+        console.log("getProductDetail res = " + JSON.stringify(res));
+        this.previewResponse(res);
+        if (res.code != undefined && res.code === 11003) {
+            this.setState({
+                invitationCodeModal: true,
+            })
         } else {
-            this.tryToLogin(async () => {
-                const res = await ajax.getProductDetail(productCode, saleId, this.state.openId, this.state.token);
-                console.log("getProductDetail res = " + JSON.stringify(res));
-                if (res.code != undefined && res.code === 11003) {
-                    this.setState({
-                        invitationCodeModal: true,
-                    })
-                } else {
-                    if (typeof window !== undefined) {
-                        window.location.href = "../product_info.html?p_id=1";
-                    }
-                }
-            });
+            if (typeof window !== undefined) {
+                window.location.href = "./product_info.html?p_id=1";
+            }
         }
     }
 
@@ -382,11 +554,12 @@ class Home extends Component {
         //判断手机号是否合法
         if (ValidateMobile(Trim(this.state.phone, 'g'))) {
             const res = await ajax.getSmsCode(this.state.phone);
+            this.previewResponse(res);
             console.log("getSmsCode res = " + JSON.stringify(res));
             if (res != undefined && res.code === 10000) {
                 this.tick()
             } else {
-                alert("获取验证码失败")
+                Toast.info("获取验证码失败")
             }
         }
     }
@@ -462,36 +635,36 @@ class Home extends Component {
         })
     }
 
-    /**
-     * 尝试登录
-     * @param nextStep
-     * @returns {Promise<void>}
-     */
-    async tryToLogin(nextStep) {
-        const res = await ajax.loginByOpenId(this.state.openId);
-        console.log("tryToLogin res = " + JSON.stringify(res));
-        if (res != undefined && res.code === 10000) {
-            this.setState({
-                token: res.result.token,
-            }, () => {
-                if (typeof nextStep === "function") {
-                    nextStep();
-                }
-            })
-        } else {
-            this.showPage('toLogin')
-        }
-    }
+    // /**
+    //  * 尝试登录
+    //  * @param nextStep
+    //  * @returns {Promise<void>}
+    //  */
+    // async tryToLogin(nextStep) {
+    //     const res = await ajax.loginByOpenId(this.state.openId);
+    //     console.log("tryToLogin res = " + JSON.stringify(res));
+    //     if (res != undefined && res.code === 10000) {
+    //         this.setState({
+    //             token: res.result.token,
+    //         }, () => {
+    //             if (typeof nextStep === "function") {
+    //                 nextStep();
+    //             }
+    //         })
+    //     } else {
+    //         this.showPage('toLogin')
+    //     }
+    // }
 
     /**
      * 尝试绑定微信openId
-     * @param smsCode
      * @returns {Promise<void>}
      */
-    async tryToBindOpenId(smsCode) {
-        const param = {"vCode": smsCode, "phoneNumber": this.state.phone, "openId": this.state.openId};
+    async tryToBindOpenId() {
+        const param = {"vCode": this.state.smsCode, "phoneNumber": this.state.phone};
         const res = await ajax.bindWechat(param);
         console.log("tryToBindOpenId res = " + JSON.stringify(res));
+        this.previewResponse(res);
         if (res != undefined && res.code === 10000) {
             this.setState({
                 token: res.result.token,
@@ -499,12 +672,22 @@ class Home extends Component {
                 this.showPage('toMine')
             })
         } else {
-            alert("登录失败")
+            Toast.info("登录失败")
         }
     }
 
     componentDidMount() {
+        console.log(JSON.stringify(code))
 
+        if (nav_to != undefined && nav_to !== '') {
+            switch (nav_to) {
+                case 'login':
+                    break;
+                    this.showPage('toLogin');
+                default:
+                    break
+            }
+        }
     }
 
     componentWillUnMount() {
@@ -530,6 +713,20 @@ class Home extends Component {
     }
 
     render() {
+
+        const onFaceUploadPress = () => {
+            if (this.state.backRecognized && this.state.faceRecognized) {
+                return;
+            }
+            this.refs.uploadFace.click()
+        };
+        const onBackUploadPress = () => {
+            if (this.state.backRecognized && this.state.faceRecognized) {
+                return;
+            }
+            this.refs.uploadBack.click()
+        };
+
         return (
             <div style={{width: '100%'}}>
                 <div style={this.state.toHome ? {width: '100%'} : {display: 'none'}}>
@@ -537,14 +734,8 @@ class Home extends Component {
                         rightContent={[
                             <img key={1} style={{width: '15px', height: '15px'}} src={IconMine}
                                  alt={""} onClick={() => {
-                                if (this.state.token != '' && this.state.token != undefined) {
-                                    this.showPage("toMine");
-                                } else {
-                                    this.tryToLogin(() => {
-                                        this.showPage("toMine");
-                                        this.checkUserCertificationStatus();
-                                    });
-                                }
+                                this.showPage("toMine");
+                                this.checkUserCertificationStatus();
                             }}/>
                         ]}
                     >大衍金融</NavBar>
@@ -579,7 +770,7 @@ class Home extends Component {
                                         marginTop: '8px'
                                     }}>0/9999
                                     </div>
-                                    <Progress percent={40} position="normal" unfilled={true}
+                                    <Progress percent={0} position="normal" unfilled={true}
                                               appearTransition
                                               style={{
                                                   backgroundColor: '#252B5C',
@@ -603,7 +794,9 @@ class Home extends Component {
                             arrow={this.state.userCertification ? 'none' : "horizontal"}
                             thumb={IconRealName}
                             onClick={() => {
-                                this.showPage('toUserCertification')
+                                if (!this.state.userCertification) {
+                                    this.showPage('toUserCertification')
+                                }
                             }}
                         >
                             实名认证 <div style={{
@@ -631,14 +824,14 @@ class Home extends Component {
                         >
                             我预约的产品
                         </Item>
-                        <Item
-                            arrow="horizontal"
-                            thumb={IconLogout}
-                            onClick={() => {
-                            }}
-                        >
-                            退出登录
-                        </Item>
+                        {/*<Item*/}
+                        {/*arrow="horizontal"*/}
+                        {/*thumb={IconLogout}*/}
+                        {/*onClick={() => {*/}
+                        {/*}}*/}
+                        {/*>*/}
+                        {/*退出登录*/}
+                        {/*</Item>*/}
                     </List>
                 </div>
 
@@ -652,7 +845,7 @@ class Home extends Component {
                             {
                                 () => {
                                     if (!this.state.showCode) {
-                                        this.showPage('toMine');
+                                        this.showPage('toHome');
                                     } else {
                                         this.showOrCloseCodeInputView(false);
                                     }
@@ -698,40 +891,114 @@ class Home extends Component {
                             onChange={codeArray => {
                                 const smsCode = Array.prototype.join.call(codeArray, '')
                                 console.log(smsCode);
+                                let isSmsCodeCorrect = false;
                                 if (smsCode != undefined && smsCode !== '' && (smsCode.length === 6)) {
-                                    this.tryToBindOpenId(smsCode);
+                                    isSmsCodeCorrect = true;
                                 }
+
+                                this.setState({
+                                    smsCode: smsCode,
+                                    smsCodeIsCorrect: isSmsCodeCorrect,
+                                })
                             }}
                         />
                         <p style={{marginTop: '10px', marginBottom: '10px'}}>请填写验证码</p>
+
                         <p onClick={this.getSmsCode}>{this.state.secondsElapsed === smsRequestInterval ? "重新发送" : "剩余" + this.state.secondsElapsed + "秒"}</p>
+
+                        <input
+                            type="button"
+                            className="invitationCodeButton"
+                            value="登录"
+                            disabled={this.state.smsCodeIsCorrect ? '' : 'disabled'}
+                            style={{marginBottom: '80px'}}
+                            onClick={() => {
+                                this.tryToBindOpenId();
+                            }}/>
                     </div>
                 </div>
 
                 <div style={this.state.toUserCertification ? {width: '100%'} : {display: 'none'}}>
-                    <NavBar
-                        leftContent="我"
-                        icon={<Icon type="left"/>}
-                        onLeftClick={() => {
-                            this.showPage('toMine')
-                        }}
-                    >实名认证</NavBar>
+                    <div className="title">
+                        <NavBar
+                            leftContent="我"
+                            icon={<Icon type="left"/>}
+                            onLeftClick={() => {
+                                this.showPage('toMine')
+                                this.checkUserCertificationStatus();
+                            }}
+                        >实名认证</NavBar>
+                    </div>
 
-                    <ImagePicker
-                        key={0}
-                        files={this.state.faceIdImages}
-                        onChange={this.onFaceIDImagesChange}
-                        selectable={this.state.faceIdImages.length < 1}
-                        length={1}
-                    />
+                    <div className="content" style={{textAlign: 'center'}}>
+                        <WhiteSpace/>
+                        <WhiteSpace/>
+                        <WhiteSpace/>
+                        <div style={{
+                            textAlign: 'left',
+                            fontSize: '12px',
+                            marginBottom: '10px',
+                            marginLeft: '10%'
+                        }}>身份证国徽面：
+                        </div>
+                        <img style={{width: '80%', height: '200px'}}
+                             src={this.state.backImageLoaded ? this.state.backIdImageBase64Data : BgUploadId} alt=""
+                             onClick={onBackUploadPress}/>
+                        <WhiteSpace/>
+                        <input type="button" className="reloadIdImageButton" value="重新上传"
+                               style={(!this.state.backImageLoaded || (this.state.backRecognized && this.state.faceRecognized)) ? {display: 'none'} : {}}
+                               onClick={onBackUploadPress}/>
+                        <WhiteSpace/>
 
-                    <ImagePicker
-                        key={1}
-                        files={this.state.backIdImages}
-                        onChange={this.onBackIDImagesChange}
-                        selectable={this.state.backIdImages.length < 1}
-                        length={1}
-                    />
+                        <div style={{
+                            textAlign: 'left',
+                            fontSize: '12px',
+                            marginBottom: '10px',
+                            marginLeft: '10%'
+                        }}>身份证头像面：
+                        </div>
+                        <img style={{width: '80%', height: '200px', backgroundColor: 'transparent'}}
+                             src={this.state.faceImageLoaded ? this.state.faceIdImageBase64Data : BgUploadId} alt=""
+                             onClick={onFaceUploadPress}/>
+                        <WhiteSpace/>
+                        <input type="button" className="reloadIdImageButton" value="重新上传"
+                               style={(!this.state.faceImageLoaded || (this.state.backRecognized && this.state.faceRecognized)) ? {display: 'none'} : {}}
+                               onClick={onFaceUploadPress}/>
+                        <WhiteSpace/>
+                        <WhiteSpace/>
+                        <WhiteSpace/>
+                        <input ref="uploadFace" type="file" accept="image/*" style={{display: 'none'}}
+                               onChange={this.onFaceIDImagesChange}/>
+                        <input ref="uploadBack" type="file" accept="image/*" style={{display: 'none'}}
+                               onChange={this.onBackIDImagesChange}/>
+                    </div>
+
+
+                    {/*<ImagePicker*/}
+                    {/*key={0}*/}
+                    {/*files={this.state.faceIdImages}*/}
+                    {/*onChange={this.onFaceIDImagesChange}*/}
+                    {/*selectable={this.state.faceIdImages.length < 2 && !this.state.faceRecognized}*/}
+                    {/*length={2}*/}
+                    {/*/>*/}
+
+                    {/*/!*<input type="file" accept=".png, .jpg, .jpeg" />*!/*/}
+
+                    {/*<ImagePicker*/}
+                    {/*key={1}*/}
+                    {/*files={this.state.backIdImages}*/}
+                    {/*onChange={this.onBackIDImagesChange}*/}
+                    {/*selectable={this.state.backIdImages.length < 2 && !this.state.backRecognized}*/}
+                    {/*length={2}*/}
+                    {/*/>*/}
+
+                    <div className="footer"
+                         style={(this.state.backRecognized && this.state.faceRecognized) ? {display: 'none'} : {}}>
+                        <div className="footer-button" onClick={() => {
+                            this.handleRecognize()
+                        }}>认证
+                        </div>
+                    </div>
                 </div>
 
                 <div style={this.state.toAttentionProductList ? {width: '100%'} : {display: 'none'}}>
@@ -792,7 +1059,8 @@ class Home extends Component {
                                         paddingTop: '5px',
                                         textAlign: 'center'
                                     }}>
-                                        <Progress percent={40} position="normal" unfilled={true}
+                                        <Progress percent={(this.state.totalBookedCount / totalCount).toFixed(4) * 100}
+                                                  position="normal" unfilled={true}
                                                   appearTransition
                                                   style={{
                                                       backgroundColor: '#2F3F75',
@@ -807,7 +1075,8 @@ class Home extends Component {
                                                   }}/>
                                         <div style={{
                                             flex: 1,
-                                        }}><span>80%</span></div>
+                                        }}><span>{(this.state.totalBookedCount / totalCount).toFixed(4) * 100}%</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -848,9 +1117,9 @@ class Home extends Component {
                                     position: 'absolute',
                                     bottom: '15px',
                                 }}>
-                                    <div style={{marginBottom: '5px'}}><span>预约时间 2018/12/12 22:22</span></div>
+                                    <div style={{marginBottom: '5px'}}><span>预约时间 {this.state.bookTime}</span></div>
                                     <Flex>
-                                        <Flex.Item><span>预约认筹金额 2000</span></Flex.Item>
+                                        <Flex.Item><span>预约认筹金额 {this.state.myBookedCount * eachCountFigure}</span></Flex.Item>
                                         <Flex.Item
                                             style={{textAlign: 'right'}}><span>预约开发时间 2018/12/14</span></Flex.Item>
                                     </Flex>
@@ -897,7 +1166,8 @@ class Home extends Component {
                             <WhiteSpace/>
                             <Flex>
                                 <Flex.Item style={{flex: 9}}>
-                                    <Progress percent={40} position="normal" unfilled={true}
+                                    <Progress percent={(this.state.totalBookedCount / totalCount).toFixed(4) * 100}
+                                              position="normal" unfilled={true}
                                               appearTransition
                                               style={{
                                                   backgroundColor: '#2F3F75',
@@ -909,7 +1179,7 @@ class Home extends Component {
                                               }}/>
                                 </Flex.Item>
                                 <Flex.Item style={{flex: 1}}>
-                                    80%
+                                    {(this.state.totalBookedCount / totalCount).toFixed(4) * 100}%
                                 </Flex.Item>
                             </Flex>
                         </WingBlank>
@@ -994,7 +1264,8 @@ class Home extends Component {
                             <WhiteSpace/>
                             <Flex>
                                 <Flex.Item style={{flex: 9}}>
-                                    <Progress percent={40} position="normal" unfilled={true}
+                                    <Progress percent={(this.state.totalBookedCount / totalCount).toFixed(4) * 100}
+                                              position="normal" unfilled={true}
                                               appearTransition
                                               style={{
                                                   backgroundColor: '#2F3F75',
@@ -1006,7 +1277,7 @@ class Home extends Component {
                                               }}/>
                                 </Flex.Item>
                                 <Flex.Item style={{flex: 1}}>
-                                    80%
+                                    {(this.state.totalBookedCount / totalCount).toFixed(4) * 100}%
                                 </Flex.Item>
                             </Flex>
                         </WingBlank>

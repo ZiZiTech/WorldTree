@@ -1,8 +1,10 @@
 import React, {PureComponent} from 'react';
-import {Card, WingBlank, WhiteSpace, Flex, Progress, Tag} from "antd-mobile";
+import {WhiteSpace, Flex} from "antd-mobile";
 import './index.css';
-import IconLocation from './icon-location.png'
-import IconLogo from './icon-logo.png'
+import IconLocation from './images/icon-location.png'
+import IconLogo from './images/icon-logo.png'
+import BgTop from './images/bg-top.png'
+import BgBottom from './images/bg-bottom.png'
 
 class ProductItem extends PureComponent {
 
@@ -10,12 +12,28 @@ class ProductItem extends PureComponent {
         return (
             <div className="card-container" onClick={this.props.toProjectDetail}>
                 <div className="card-body">
+                    <img src={BgTop} alt=""
+                         style={{
+                             width: '100%'
+                         }}/>
                     <div style={{
-                        marginTop: '70px'
+                        padding: '5px',
+                        border: 'none',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0
                     }}>
-                        <div style={{display: 'flex'}}>
-                            <div style={{flex: 8,float:'left'}}>
-                                <span style={{fontSize: '12px'}}>太平洋东星债转股优先级计划4号</span>
+                        <div style={{
+                            display: 'flex',
+                            position: 'absolute',
+                            left: 10,
+                            right: 10,
+                            bottom: 10
+                        }}>
+                            <div style={{flex: 8, float: 'left'}}>
+                                <span style={{fontSize: '0.8em'}}>太平洋东星债转股优先级计划4号</span>
                             </div>
                             <div style={{flex: 3}}>
                                 <div className="status-tag">火爆预约中</div>
@@ -23,11 +41,11 @@ class ProductItem extends PureComponent {
                             <div style={{flex: 4}}>
                                 <div style={{
                                     textAlign: 'right',
-                                    fontSize: '80%',
+                                    fontSize: '0.7em',
                                 }}>
-                                    <span style={{fontSize: '12px'}}>年化收益</span>&nbsp;
-                                    <span style={{fontSize: '1.4em'}}>6%</span>&nbsp;
-                                    <span style={{fontSize: '12px'}}>起</span>
+                                    <span>年化收益</span>&nbsp;
+                                    <span style={{fontSize: '1.2em'}}>6%</span>&nbsp;
+                                    <span>起</span>
                                 </div>
                             </div>
                         </div>
@@ -35,7 +53,18 @@ class ProductItem extends PureComponent {
                     </div>
                 </div>
                 <div className="card-foot">
-                    <Flex>
+                    <img src={BgBottom} alt=""
+                         style={{
+                             width: '100%'
+                         }}/>
+                    <Flex style={{
+                        border: 'none',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0
+                    }}>
                         <Flex.Item style={{flex: 1, textAlign: 'center'}}>
                             <img style={{width: '10px', height: 'auto'}} src={IconLocation} alt=""/>
                         </Flex.Item>
@@ -52,24 +81,6 @@ class ProductItem extends PureComponent {
                             <span>大衍资本</span>
                         </Flex.Item>
                     </Flex>
-                    {/*<WhiteSpace/>*/}
-                    {/*<Flex>*/}
-                    {/*<Flex.Item style={{flex: 9, marginLeft: '12px', marginRight: '12px'}}>*/}
-                    {/*<Progress percent={40} position="normal" unfilled={true}*/}
-                    {/*appearTransition*/}
-                    {/*style={{*/}
-                    {/*backgroundColor: '#2F3F75',*/}
-                    {/*borderRadius: '5px 5px 5px 5px'*/}
-                    {/*}}*/}
-                    {/*barStyle={{*/}
-                    {/*border: '4px solid #FCB53F',*/}
-                    {/*borderRadius: '5px 0px 0px 5px'*/}
-                    {/*}}/>*/}
-                    {/*</Flex.Item>*/}
-                    {/*<Flex.Item style={{flex: 1}}>*/}
-                    {/*<span>80%</span>*/}
-                    {/*</Flex.Item>*/}
-                    {/*</Flex>*/}
                 </div>
             </div>
         );

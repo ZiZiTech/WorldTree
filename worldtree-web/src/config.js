@@ -21,9 +21,9 @@ module.exports = {
         warn: [],
         error: ['loggerA', 'loggerB'],  // 示例, 对于loggerA和loggerB使用error级别, 其他logger使用默认的info级别
     },
-
+    recUrl: 'http://dapa.inredata.com/rec/rest/160601/ocr/ocr_idcard.json',
     api: {  // 对后端请求的相关配置
-        host: 'http://127.0.0.1:8089/api/finance',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
+        host: 'http://dapa.inredata.com/api/finance',  // 调用ajax接口的地址, 默认值空, 如果是跨域的, 服务端要支持CORS
         path: '',  // ajax请求的路径
         timeout: 150000,  // 请求的超时时间, 单位毫秒
     },

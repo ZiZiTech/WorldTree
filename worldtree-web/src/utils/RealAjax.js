@@ -78,102 +78,104 @@ class Ajax {
     post(url, data, opts = {}) {
         const headers = {
             'Content-Type': 'application/json',
+            "openId": 'wjswr123',
         };
         console.log("post data = " + JSON.stringify(data));
         return this.requestWrapper('POST', url, {...opts, data, headers});
     }
 
-    postWithToken(url, data, token, opts = {}) {
-        const headers = {
-            'Content-Type': 'application/json',
-            "FinanceAuth": token
-        };
-        console.log("post data = " + JSON.stringify(data));
-        return this.requestWrapper('POST', url, {...opts, data, headers});
-    }
+    // postWithToken(url, data, token, opts = {}) {
+    //     const headers = {
+    //         'Content-Type': 'application/json',
+    //         "FinanceAuth": token,
+    //         "openId":'wjswr123',
+    //     };
+    //     console.log("post data = " + JSON.stringify(data));
+    //     return this.requestWrapper('POST', url, {...opts, data, headers});
+    // }
 
 
     // 业务方法
-    //openId登录
-    loginByOpenId(openId) {
-        return this.post(`${globalConfig.getAPIPath()}login/loginByOpenId`, {"openId": openId});
-    }
+    // //openId登录
+    // loginByOpenId(openId) {
+    //     return this.post(`${globalConfig.getAPIPath()}login/loginByOpenId`, {"openId": openId});
+    // }
 
     //获取验证码
     getSmsCode(phoneNumber) {
-        return this.post(`${globalConfig.getAPIPath()}login/getLoginCode`, {"phoneNumber": phoneNumber});
+        return this.post(`${globalConfig.getAPIPath()}finance/login/gst/getLoginCode`, {"phoneNumber": phoneNumber});
     }
+
+
+
 
     //绑定手机号
     bindWechat(params) {
-        return this.post(`${globalConfig.getAPIPath()}login/login`, {
+        return this.post(`${globalConfig.getAPIPath()}finance/login/gst/login`, {
             "vCode": params.vCode,
             "phoneNumber": params.phoneNumber,
-            "openId": params.openId,
         });
     }
 
     //获取项目详情
-    getProductDetail(productCode, saleId, openId, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getProductDetail`, {
+    getProductDetail(productCode, saleId) {
+        return this.post(`${globalConfig.getAPIPath()}wxUser/userProduct/gst/getProductDetail`, {
             "productCode": productCode,
-            "openId": openId,
             "saleId": saleId
-        }, token);
+        });
     }
 
     //验证邀请码
-    verifyInvitationCode(productCode, saleId, openId, invitationCode, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getProductDetail`, {
+    verifyInvitationCode(productCode, saleId, invitationCode) {
+        return this.post(`${globalConfig.getAPIPath()}wxUser/userProduct/gst/getProductDetail`, {
             "productCode": productCode,
-            "openId": openId,
             "saleId": saleId,
             "invitationCode": invitationCode,
-        }, token);
+        });
     }
 
-    //获取产品是否被关注
-    getAttentionProduct(productCode, saleId, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getAttentionProduct`, {
-            "productCode": productCode,
-            "saleId": saleId
-        }, token);
-    }
+    // //获取产品是否被关注
+    // getAttentionProduct(productCode, saleId, token) {
+    //     return this.postWithToken(`${globalConfig.getAPIPath()}wxUser/userProduct/getAttentionProduct`, {
+    //         "productCode": productCode,
+    //         "saleId": saleId
+    //     }, token);
+    // }
 
     //关注产品
-    attentionProduct(productCode, saleId, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/attentionProduct`, {
+    attentionProduct(productCode, saleId) {
+        return this.post(`${globalConfig.getAPIPath()}finance/userProduct/lgn/attentionProduct`, {
             "productCode": productCode,
             "saleId": saleId
-        }, token);
+        });
     }
 
     //判断产品是否被预约
-    getProductBookStatus(productCode, saleId, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/getProductBooked`, {
+    getProductBookStatus(productCode, saleId) {
+        return this.post(`${globalConfig.getAPIPath()}finance/userProduct/lgn/getProductBooked`, {
             "productCode": productCode,
             "saleId": saleId
-        }, token);
+        });
     }
 
     //预约产品
-    bookProduct(productCode, saleId, bookCount, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}finance/userProduct/attentionProduct`, {
+    bookProduct(productCode, saleId, bookCount) {
+        return this.post(`${globalConfig.getAPIPath()}finance/userProduct/lgn/bookProduct`, {
             "productCode": productCode,
             "saleId": saleId,
             "bookCount": bookCount,
-        }, token);
+        });
     }
 
     //获取用户是否认证
-    getUserCertification(token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}finance/user/getUserCertification`, {}, token);
+    getUserCertification() {
+        return this.post(`${globalConfig.getAPIPath()}finance/user/lgn/getUserCertification`, {});
     }
 
     //用户认证
-    certificationUser(data, token) {
-        return this.postWithToken(`${globalConfig.getAPIPath()}finance/user/certificationUser`,
-            data, token);
+    certificationUser(data) {
+        return this.post(`${globalConfig.getAPIPath()}finance/user/lgn/certificationUser`,
+            data);
     }
 
     //身份证识别
@@ -182,7 +184,7 @@ class Ajax {
             "Authorization": "APPCODE 30cdc788760a48f5ba391c22473b396c",
         };
         console.log("post data = " + JSON.stringify(data));
-        return this.requestWrapper('POST', `http://127.0.0.1:8089/rec/rest/160601/ocr/ocr_idcard.json`, {
+        return this.requestWrapper('POST', `${globalConfig.recUrl}`, {
             data,
             headers
         });

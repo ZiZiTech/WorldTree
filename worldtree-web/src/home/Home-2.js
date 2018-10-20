@@ -20,7 +20,7 @@ import {
 import HomeProductItem from '../compont/HomeProductItem'
 import {isWeixin} from "../utils";
 import ajax from "../utils/ajax";
-import head from './head.png'
+import head from './images/head.png'
 import ProductItem from "../compont/ProductItem";
 import {district, provinceLite} from 'antd-mobile-demo-data';
 

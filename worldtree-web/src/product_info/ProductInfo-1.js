@@ -8,7 +8,7 @@ import ImageProductDetail03 from './image-product-detail03.png'
 import ImageProductDetail04 from './image-product-detail04.png'
 import ImageProductDetail05 from './image-product-detail05.png'
 import ImageProductDetail06 from './image-product-detail06.png'
-import BgProductItem from './bg-product-item.png'
+import BgProductItem from './images/bg-product-item.png'
 
 const saleId = 1;
 const productCode = "100010000";

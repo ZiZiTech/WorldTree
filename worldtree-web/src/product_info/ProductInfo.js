@@ -1,18 +1,22 @@
 import React, {Component} from 'react';
 import './ProductInfo.css';
-import {Button, Tabs, WhiteSpace, WingBlank, NavBar, Icon, Flex, Carousel, Progress, Modal} from "antd-mobile";
+import {WhiteSpace, WingBlank, NavBar, Icon, Progress, Modal, Toast} from "antd-mobile";
 
-import ImageProductDetail01 from './image-product-detail01.png'
-import ImageProductDetail02 from './image-product-detail02.png'
-import ImageProductDetail03 from './image-product-detail03.png'
-import ImageProductDetail04 from './image-product-detail04.png'
-import ImageProductDetail05 from './image-product-detail05.png'
-import ImageProductDetail06 from './image-product-detail06.png'
-import BgProductItem from './bg-product-item.png'
+import ImageProductDetail01 from './images/image-product-detail01.png'
+import ImageProductDetail02 from './images/image-product-detail02.png'
+import ImageProductDetail03 from './images/image-product-detail03.png'
+import ImageProductDetail04 from './images/image-product-detail04.png'
+import ImageProductDetail05 from './images/image-product-detail05.png'
+import ImageProductDetail06 from './images/image-product-detail06.png'
+import BgProductItem from './images/bg-product-item.png'
 import ajax from "../utils/ajax";
+import {GetQueryString} from "../utils";
 
 const saleId = 1;
 const productCode = "100010000";
+const totalCount = 300;
+const eachCountFigure = 20000;
+const code = GetQueryString('code')
 
 function closest(el, selector) {
     const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
@@ -30,20 +34,59 @@ class ProductInfo extends Component {
         super(props);
         this.state = {
             carouseData: [ImageProductDetail01],
-            openId: 'wjswr123',
-            hasBindWechat: false,
+            // openId: 'wjswr12356',
+            // hasBindWechat: false,
             invitationCodeModal: false,
             invitationCode: '',
             verityInvitationCodeCorrect: true,
             token: '',
             productAttentionStatus: false,//false未关注，true已关注
+            totalBookedCount: 0,
+            userCertification: false,
         };
 
         this.onWrapTouchStart = this.onWrapTouchStart.bind(this);
         this.verifyInvitationCode = this.verifyInvitationCode.bind(this);
         this.onInvitationCodeChange = this.onInvitationCodeChange.bind(this);
-        this.tryToLogin = this.tryToLogin.bind(this);
         this.productAttention = this.productAttention.bind(this);
+        this.checkUserCertificationStatus = this.checkUserCertificationStatus.bind(this);
+        this.previewResponse = this.previewResponse.bind(this);
+    }
+
+    previewResponse(res) {
+        if (res == undefined) {
+            Toast.fail("服务器出错");
+            return;
+        } else {
+            if (res.code === 10001) {
+                Toast.info("请先登录");
+                this.showPage('toLogin')
+                return;
+            }
+        }
+    }
+
+    /**
+     * 判断是否已实名认证
+     * @returns {Promise<void>}
+     */
+    async checkUserCertificationStatus() {
+        console.log("checkUserCertificationStatus")
+        const res = await ajax.getUserCertification();
+        console.log("checkUserCertificationStatus res = " + JSON.stringify(res));
+        this.previewResponse(res);
+        if (res != undefined && res.code === 10000) {
+            if (!res.result.userCertification) {
+                window.location.href = "./home.html?nav_to=login";
+            } else {
+                this.setState({
+                    userCertification: res.result.userCertification,
+                })
+            }
+        } else {
+            Toast.info("请求失败");
+        }
+
     }
 
     /**
@@ -53,8 +96,9 @@ class ProductInfo extends Component {
     async verifyInvitationCode() {
         const {invitationCode} = this.state;
         if (invitationCode != undefined && '' !== invitationCode) {
-            const res = await ajax.verifyInvitationCode(productCode, saleId, this.state.openId, invitationCode, '');
+            const res = await ajax.verifyInvitationCode(productCode, saleId, invitationCode);
             console.log("verifyInvitationCode res = " + JSON.stringify(res));
+            this.previewResponse(res);
             if (res != undefined && res.code === 10000) {
                 this.setState({
                     verityInvitationCodeCorrect: true,
@@ -67,7 +111,7 @@ class ProductInfo extends Component {
                 })
             }
         } else {
-            alert("验证码不能为空")
+            Toast.info("验证码不能为空")
         }
     }
 
@@ -77,19 +121,15 @@ class ProductInfo extends Component {
      */
     async productAttention() {
         console.log("productAttention")
-        //已绑定微信
-        if (this.state.hasBindWechat) {
-            const res = await ajax.attentionProduct(productCode, saleId, this.state.token);
-            console.log("productAttention res = " + JSON.stringify(res));
-            if (res != undefined && res.code === 10000) {
-                this.setState({
-                    productAttentionStatus: true,
-                })
-            } else {
-                alert("关注失败")
-            }
-        } else {//未绑定微信
-            alert("请先绑定手机号")
+        const res = await ajax.attentionProduct(productCode, saleId);
+        console.log("productAttention res = " + JSON.stringify(res));
+        this.previewResponse(res);
+        if (res != undefined && res.code === 10000) {
+            this.setState({
+                productAttentionStatus: true,
+            })
+        } else {
+            Toast.info("关注失败")
         }
     }
 
@@ -98,8 +138,9 @@ class ProductInfo extends Component {
      * @returns {Promise<void>}
      */
     async getProductDetail() {
-        const res = await ajax.getProductDetail(productCode, saleId, this.state.openId, '');
+        const res = await ajax.getProductDetail(productCode, saleId);
         console.log("getProductDetail res = " + JSON.stringify(res));
+        this.previewResponse(res);
         if (res.code != undefined) {
             if (res.code === 11003) {
                 this.setState({
@@ -110,10 +151,11 @@ class ProductInfo extends Component {
                 this.setState({
                     invitationCodeModal: false,
                     productAttentionStatus: res.result.attention,
+                    totalBookedCount: res.result.bookedCount,
                 })
             }
         } else {
-            alert("服务器出错")
+            Toast.info("服务器出错")
         }
     }
 
@@ -127,30 +169,30 @@ class ProductInfo extends Component {
         })
     }
 
-    /**
-     * 尝试登录
-     * @param nextStep
-     * @returns {Promise<void>}
-     */
-    async tryToLogin() {
-        const res = await ajax.loginByOpenId(this.state.openId);
-        console.log("tryToLogin res = " + JSON.stringify(res));
-        if (res != undefined && res.code === 10000) {
-            this.setState({
-                token: res.result.token,
-                hasBindWechat: true,
-            }, () => {
-                this.getProductDetail();
-            })
-        } else {
-            this.setState({
-                productAttentionStatus: false,
-                hasBindWechat: false,
-            }, () => {
-                this.getProductDetail();
-            })
-        }
-    }
+    // /**
+    //  * 尝试登录
+    //  * @param nextStep
+    //  * @returns {Promise<void>}
+    //  */
+    // async tryToLogin() {
+    //     const res = await ajax.loginByOpenId(this.state.openId);
+    //     console.log("tryToLogin res = " + JSON.stringify(res));
+    //     if (res != undefined && res.code === 10000) {
+    //         this.setState({
+    //             token: res.result.token,
+    //             hasBindWechat: true,
+    //         }, () => {
+    //             this.getProductDetail();
+    //         })
+    //     } else {
+    //         this.setState({
+    //             productAttentionStatus: false,
+    //             hasBindWechat: false,
+    //         }, () => {
+    //             this.getProductDetail();
+    //         })
+    //     }
+    // }
 
     onWrapTouchStart(e) {
         // fix touch to scroll background page on iOS
@@ -164,7 +206,9 @@ class ProductInfo extends Component {
     }
 
     componentDidMount() {
-        this.tryToLogin();
+        // this.tryToLogin();
+        // console.log(JSON.stringify(code));
+        this.getProductDetail();
     }
 
     componentWillUnMount() {
@@ -181,25 +225,25 @@ class ProductInfo extends Component {
                             {
                                 () => {
                                     console.log('onLeftClick')
-                                    window.location.href = "../home.html";
+                                    window.location.href = "./home.html";
                                 }
                             }
                     >项目介绍</NavBar>
 
-                    <Flex>
-                        <Flex.Item style={{textAlign: 'center'}}>
-                            <a href="#survey">项目介绍</a>
-                        </Flex.Item>
-                        <Flex.Item style={{textAlign: 'center'}}>
-                            <a href="#introduction">标的介绍</a>
-                        </Flex.Item>
-                        <Flex.Item style={{textAlign: 'center'}}>
-                            <a href="#guaranty_style">担保方式</a>
-                        </Flex.Item>
-                        <Flex.Item style={{textAlign: 'center'}}>
-                            <a href="#management_team">管理团队</a>
-                        </Flex.Item>
-                    </Flex>
+                    {/*<Flex>*/}
+                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
+                    {/*<a href="#survey">项目介绍</a>*/}
+                    {/*</Flex.Item>*/}
+                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
+                    {/*<a href="#introduction">标的介绍</a>*/}
+                    {/*</Flex.Item>*/}
+                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
+                    {/*<a href="#guaranty_style">担保方式</a>*/}
+                    {/*</Flex.Item>*/}
+                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
+                    {/*<a href="#management_team">管理团队</a>*/}
+                    {/*</Flex.Item>*/}
+                    {/*</Flex>*/}
                 </div>
                 <div className="content">
                     <div style={{backgroundColor: '#efefef'}}>
@@ -240,7 +284,8 @@ class ProductInfo extends Component {
                                             paddingLeft: '10px',
                                             paddingTop: '5px'
                                         }}>
-                                            <div style={{flex: 3}}><span style={{fontSize: '1.0em'}}>太平洋东星债转股优先级计划4号</span>
+                                            <div style={{flex: 3}}><span
+                                                style={{fontSize: '1.0em'}}>太平洋东星债转股优先级计划4号</span>
                                             </div>
                                             <div style={{flex: 1}}>
                                                 <div className="product-status-tag">火爆预约中</div>
@@ -252,23 +297,27 @@ class ProductInfo extends Component {
                                             paddingTop: '5px',
                                             textAlign: 'center'
                                         }}>
-                                            <Progress percent={40} position="normal" unfilled={true}
-                                                      appearTransition
-                                                      style={{
-                                                          backgroundColor: '#2F3F75',
-                                                          borderRadius: '5px 5px 5px 5px',
-                                                          flex: 4,
-                                                          height: '9px',
-                                                          marginTop: '3px',
-                                                      }}
-                                                      barStyle={{
-                                                          border: '4px solid #FCB53F',
-                                                          borderRadius: '5px 0px 0px 5px'
-                                                      }}/>
+                                            <Progress
+                                                percent={(this.state.totalBookedCount / totalCount).toFixed(4) * 100}
+                                                position="normal" unfilled={true}
+                                                appearTransition
+                                                style={{
+                                                    backgroundColor: '#2F3F75',
+                                                    borderRadius: '5px 5px 5px 5px',
+                                                    flex: 4,
+                                                    height: '9px',
+                                                    marginTop: '3px',
+                                                }}
+                                                barStyle={{
+                                                    border: '4px solid #FCB53F',
+                                                    borderRadius: '5px 0px 0px 5px'
+                                                }}/>
                                             <div style={{
                                                 flex: 1,
                                                 paddingLeft: '10px'
-                                            }}><span>80%</span></div>
+                                            }}>
+                                                <span>{(this.state.totalBookedCount / totalCount).toFixed(4) * 100}%</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div style={{flex: 1, marginTop: '5px'}}><input onClick={this.productAttention}

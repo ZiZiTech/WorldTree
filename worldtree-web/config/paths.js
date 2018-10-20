@@ -34,17 +34,17 @@ const getPublicUrl = appPackageJson =>
 function getServedPath(appPackageJson) {
     const publicUrl = getPublicUrl(appPackageJson);
     const servedUrl =
-        envPublicUrl || (publicUrl ? url.parse(publicUrl).pathname : '/');
+        envPublicUrl || (publicUrl ? url.parse(publicUrl).pathname : './');
     return ensureSlash(servedUrl, true);
 }
 
 const appArr = [
     'home',
-    'security',
-    'helper',
-    'login',
-    'register',
-    'pcenter',
+    // 'security',
+    // 'helper',
+    // 'login',
+    // 'register',
+    // 'pcenter',
     'product_info'
 ];
 

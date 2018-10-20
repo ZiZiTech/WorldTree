@@ -10,6 +10,8 @@ export default class extends Component {
             dom: new Array(props.length)
         };
     }
+
+
     onChange(e, i) {
         const value = e.target.value.trim();
 
@@ -87,6 +89,11 @@ export default class extends Component {
     componentDidCatch(error, info) {
         console.error(error);
     }
+
+    componentDidMount() {
+        this.focusOn(0);
+    }
+
     render() {
         const codeBox = [];
         this.state.dom = [];

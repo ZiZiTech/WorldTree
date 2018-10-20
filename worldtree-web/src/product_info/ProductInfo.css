@@ -21,12 +21,12 @@ a {
 .title {
     top: 0;
     z-index: 1;
-    height: 65px;
+    height: 40px;
     background-color: #353EA4;
 }
 
 .content {
-    top: 65px;
+    top: 40px;
     bottom: 0px;
     overflow: auto;
 }
@@ -86,7 +86,7 @@ span {
 .attentionButton {
     border: none;
     height: 40px;
-    background: url(./selector-attention-normal.png);
+    background: url(./images/selector-attention-normal.png);
     background-repeat: no-repeat;
     background-size: 100% 100%;
     width: 90%;
@@ -96,7 +96,7 @@ span {
 
 .attentionButton:active {
     border: none;
-    background: url(./selector-attention-pressed.png);
+    background: url(./images/selector-attention-pressed.png);
     background-repeat: no-repeat;
     background-size: 100% 100%;
     font-size: 12px;
@@ -104,7 +104,7 @@ span {
 
 .attentionButton:disabled {
     border: none;
-    background: url(./selector-attention-pressed.png);
+    background: url(./images/selector-attention-pressed.png);
     background-repeat: no-repeat;
     background-size: 100% 100%;
     font-size: 12px;
@@ -142,7 +142,7 @@ span {
 }
 
 .am-modal-content {
-    background-image: url(bg-modal.png);
+    background-image: url(images/bg-modal.png);
     background-size: cover;
     background-color: transparent;
 }
