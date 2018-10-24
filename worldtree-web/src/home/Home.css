@@ -55,6 +55,7 @@
 
 .am-navbar {
     background-color: #353EA4;
+    height: 50px;
 }
 
 .my-list .spe .am-list-extra {
@@ -279,9 +280,10 @@ a {
 }
 
 .content {
-    top: 40px;
-    bottom: 50px;
+    top: 50px;
+    bottom: 0px;
     overflow: auto;
+    -webkit-overflow-scrolling : touch;
 }
 
 .footer {

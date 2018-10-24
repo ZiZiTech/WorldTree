@@ -9,14 +9,17 @@ import ImageProductDetail04 from './images/image-product-detail04.png'
 import ImageProductDetail05 from './images/image-product-detail05.png'
 import ImageProductDetail06 from './images/image-product-detail06.png'
 import BgProductItem from './images/bg-product-item.png'
+import ImageShare from './images/image-share.jpeg'
 import ajax from "../utils/ajax";
 import {GetQueryString} from "../utils";
-
+import cabin from '../utils/Logger';
 const saleId = 1;
 const productCode = "100010000";
 const totalCount = 300;
 const eachCountFigure = 20000;
 const code = GetQueryString('code')
+const wx = window.jWeixin || require('weixin-js-sdk')
+const urlencode = require('urlencode');
 
 function closest(el, selector) {
     const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
@@ -54,13 +57,13 @@ class ProductInfo extends Component {
     }
 
     previewResponse(res) {
-        if (res == undefined) {
+        if (res === undefined) {
             Toast.fail("服务器出错");
             return;
         } else {
             if (res.code === 10001) {
                 Toast.info("请先登录");
-                this.showPage('toLogin')
+                window.location.href = "./home.html?nav_to=login";
                 return;
             }
         }
@@ -71,11 +74,11 @@ class ProductInfo extends Component {
      * @returns {Promise<void>}
      */
     async checkUserCertificationStatus() {
-        console.log("checkUserCertificationStatus")
+        //cabin.info("checkUserCertificationStatus")
         const res = await ajax.getUserCertification();
-        console.log("checkUserCertificationStatus res = " + JSON.stringify(res));
+        //cabin.info("checkUserCertificationStatus res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
+        if (res !== undefined && res.code === 10000) {
             if (!res.result.userCertification) {
                 window.location.href = "./home.html?nav_to=login";
             } else {
@@ -95,11 +98,11 @@ class ProductInfo extends Component {
      */
     async verifyInvitationCode() {
         const {invitationCode} = this.state;
-        if (invitationCode != undefined && '' !== invitationCode) {
+        if (invitationCode !== undefined && '' !== invitationCode) {
             const res = await ajax.verifyInvitationCode(productCode, saleId, invitationCode);
-            console.log("verifyInvitationCode res = " + JSON.stringify(res));
+            //cabin.info("verifyInvitationCode res = " + JSON.stringify(res));
             this.previewResponse(res);
-            if (res != undefined && res.code === 10000) {
+            if (res !== undefined && res.code === 10000) {
                 this.setState({
                     verityInvitationCodeCorrect: true,
                     invitationCodeModal: false,
@@ -120,11 +123,11 @@ class ProductInfo extends Component {
      * @returns {Promise<void>}
      */
     async productAttention() {
-        console.log("productAttention")
+        //cabin.info("productAttention")
         const res = await ajax.attentionProduct(productCode, saleId);
-        console.log("productAttention res = " + JSON.stringify(res));
+        cabin.info("productAttention res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
+        if (res !== undefined && res.code === 10000) {
             this.setState({
                 productAttentionStatus: true,
             })
@@ -139,9 +142,9 @@ class ProductInfo extends Component {
      */
     async getProductDetail() {
         const res = await ajax.getProductDetail(productCode, saleId);
-        console.log("getProductDetail res = " + JSON.stringify(res));
+        //cabin.info("getProductDetail res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res.code != undefined) {
+        if (res.code !== undefined) {
             if (res.code === 11003) {
                 this.setState({
                     invitationCodeModal: true,
@@ -176,7 +179,7 @@ class ProductInfo extends Component {
     //  */
     // async tryToLogin() {
     //     const res = await ajax.loginByOpenId(this.state.openId);
-    //     console.log("tryToLogin res = " + JSON.stringify(res));
+    //     //cabin.info("tryToLogin res = " + JSON.stringify(res));
     //     if (res != undefined && res.code === 10000) {
     //         this.setState({
     //             token: res.result.token,
@@ -205,9 +208,57 @@ class ProductInfo extends Component {
         }
     }
 
+    async configWechatJSSDK() {
+        cabin.info(JSON.stringify("-----111222"))
+        const url = window.location.href.split('#')[0];
+        // const url = urlencode(window.location.href.split('#')[0]);
+        cabin.info(url)
+        const res = await ajax.getWXConfigInfo(url);
+        cabin.info(JSON.stringify(res))
+        this.previewResponse(res);
+        if (res !== undefined && res.code !== undefined && res.code === 10000) {
+            wx.config({
+                debug: false,
+                appId: res.result.appId,
+                timestamp: res.result.timestamp,
+                nonceStr: res.result.nonceStr,
+                signature: res.result.signature,
+                jsApiList: [
+                    'updateTimelineShareData',
+                    'updateAppMessageShareData',
+                ]
+            });
+
+            wx.ready(function () {
+                wx.updateAppMessageShareData({
+                    title: '江苏无锡政府债转股项目', // 分享标题
+                    desc: '江苏无锡政府债转股项目介绍', // 分享描述
+                    link: 'http://dapa.inredata.com/finance/product_info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    imgUrl: {ImageShare}, // 分享图标
+                }, function (res) {//这里是回调函数
+                    Toast.info("分享成功")
+                });
+
+                wx.updateTimelineShareData({
+                    title: '江苏无锡政府债转股项目', // 分享标题
+                    link: 'http://dapa.inredata.com/finance/product_info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    imgUrl: {ImageShare}, // 分享图标
+                }, function (res) {//这里是回调函数
+                    Toast.info("分享成功")
+                });
+            });
+
+            wx.error(function (res) {
+                // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。-->
+                cabin.info("wx error " + JSON.stringify(res));
+            });
+        } else {
+            Toast.info("获取微信配置失败")
+        }
+    }
+
     componentDidMount() {
-        // this.tryToLogin();
-        // console.log(JSON.stringify(code));
+        this.configWechatJSSDK();
         this.getProductDetail();
     }
 
@@ -224,26 +275,10 @@ class ProductInfo extends Component {
                         onLeftClick=
                             {
                                 () => {
-                                    console.log('onLeftClick')
                                     window.location.href = "./home.html";
                                 }
                             }
                     >项目介绍</NavBar>
-
-                    {/*<Flex>*/}
-                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
-                    {/*<a href="#survey">项目介绍</a>*/}
-                    {/*</Flex.Item>*/}
-                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
-                    {/*<a href="#introduction">标的介绍</a>*/}
-                    {/*</Flex.Item>*/}
-                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
-                    {/*<a href="#guaranty_style">担保方式</a>*/}
-                    {/*</Flex.Item>*/}
-                    {/*<Flex.Item style={{textAlign: 'center'}}>*/}
-                    {/*<a href="#management_team">管理团队</a>*/}
-                    {/*</Flex.Item>*/}
-                    {/*</Flex>*/}
                 </div>
                 <div className="content">
                     <div style={{backgroundColor: '#efefef'}}>
@@ -285,7 +320,7 @@ class ProductInfo extends Component {
                                             paddingTop: '5px'
                                         }}>
                                             <div style={{flex: 3}}><span
-                                                style={{fontSize: '1.0em'}}>太平洋东星债转股优先级计划4号</span>
+                                                style={{fontSize: '0.9em'}}>太平洋东星债转股优先级计划4号</span>
                                             </div>
                                             <div style={{flex: 1}}>
                                                 <div className="product-status-tag">火爆预约中</div>
@@ -330,7 +365,7 @@ class ProductInfo extends Component {
 
                                 <div style={{
                                     color: '#ffffff',
-                                    fontSize: '12px',
+                                    fontSize: '0.8em',
                                     textAlign: 'center',
                                     display: 'flex',
                                     position: 'absolute',

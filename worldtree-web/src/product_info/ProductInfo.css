@@ -29,6 +29,7 @@ a {
     top: 40px;
     bottom: 0px;
     overflow: auto;
+    -webkit-overflow-scrolling : touch;
 }
 
 .footer {
@@ -61,8 +62,8 @@ a {
 
 .product-status-tag {
     -webkit-transform-origin-x: 0;
-    -webkit-transform: scale(0.70);
-    font-size: 12px;
+    -webkit-transform: scale(0.90);
+    font-size: 0.7em;
     padding: 2px;
     border-radius: 5px;
     border: 1px solid #fe8f1e;

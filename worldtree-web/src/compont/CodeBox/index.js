@@ -1,5 +1,6 @@
-import React, { Component } from "react";
-import { textSelect, removeDefaultBehavior, isFunction } from "./utils";
+import React, {Component} from "react";
+import {textSelect, removeDefaultBehavior, isFunction} from "./utils";
+import cabin from '../../utils/Logger';
 import "./index.css";
 
 export default class extends Component {
@@ -7,17 +8,17 @@ export default class extends Component {
         super(props);
         this.state = {
             code: new Array(props.length).fill(""),
-            dom: new Array(props.length)
+            dom: new Array(props.length),
+            currentIndex: 1,
         };
     }
-
 
     onChange(e, i) {
         const value = e.target.value.trim();
 
         if (isFunction(this.props.validator)) {
             if (value !== "" && !this.props.validator(value, i)) {
-                textSelect(e.target);
+                // textSelect(e.target);
                 return;
             }
         }
@@ -28,8 +29,8 @@ export default class extends Component {
 
         const newCode = this.state.code.map(v => v);
         newCode[i] = value;
-        this.setState({ code: newCode });
-        textSelect(e.target);
+        this.setState({code: newCode});
+        // textSelect(e.target);
         if (value !== "") {
             this.focusOn(i + 1);
         }
@@ -40,18 +41,23 @@ export default class extends Component {
             this.props.onChange(newCode);
         }
     }
+
     getPrevBox(i) {
         return this.state.dom[i - 1];
     }
+
     getNextBox(i) {
         return this.state.dom[i + 1];
     }
+
     focusOn(i) {
         const element = this.state.dom[i];
         if (element) {
             element.focus();
+            element.value = null;
         }
     }
+
     onKeyDown(e, i) {
         const inputElement = e.target;
         switch (e.keyCode) {
@@ -60,6 +66,9 @@ export default class extends Component {
                     // 如果空的话，那么就退回到上一个输入框
                     removeDefaultBehavior(e);
                     this.focusOn(i - 1);
+                    const newCode = this.state.code.map(v => v);
+                    newCode[i - 1] = null;
+                    this.setState({code: newCode});
                 }
                 break;
             case 37: // 左
@@ -86,22 +95,20 @@ export default class extends Component {
                 textSelect(inputElement);
         }
     }
+
     componentDidCatch(error, info) {
         console.error(error);
     }
 
-    componentDidMount() {
-        this.focusOn(0);
-    }
-
     render() {
         const codeBox = [];
-        this.state.dom = [];
+        // this.state.dom = [];
         const inputType = this.props.type || "input";
         for (let i = 0; i < this.props.length; i++) {
             codeBox.push(
                 <div key={i} className="codebox-field-wrap">
                     <input
+                        key={'input-' + i}
                         type={inputType}
                         maxLength="1"
                         autoComplete="false"
@@ -110,8 +117,13 @@ export default class extends Component {
                         spellCheck="false"
                         value={this.state.code[i]}
                         ref={dom => (this.state.dom[i] = dom)}
-                        onFocus={e => textSelect(e.target)}
-                        onClick={e => textSelect(e.target)}
+                        // onFocus={e => textSelect(e.target)}
+                        onClick={e => {
+                            cabin.info("onClick " + this.state.currentIndex)
+                            textSelect(e.target);
+                            // cabin.info(this.state.dom[this.state.currentIndex - 1])
+                            // this.state.dom[this.state.currentIndex - 1].focus;
+                        }}
                         onChange={e => this.onChange(e, i)}
                         onKeyDown={e => this.onKeyDown(e, i)}
                         placeholder="_"

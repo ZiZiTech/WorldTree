@@ -44,7 +44,7 @@ const cssFilename = 'static/css/[name].[contenthash:8].css';
 // To have this structure working with relative paths, we have to use custom options.
 const extractTextPluginOptions = shouldUseRelativeAssetPaths
     ? // Making sure that the publicPath goes back to to build folder.
-    {publicPath: Array(cssFilename.split('/').length).join('../')}
+    {publicPath: Array(cssFilename.split('/').length).join('./')}
     : {};
 
 /*生成entry对象的方法*/
@@ -95,7 +95,8 @@ module.exports = {
     bail: true,
     // We generate sourcemaps in production. This is slow but gives good results.
     // You can exclude the *.map files from the build during deployment.
-    devtool: shouldUseSourceMap ? 'source-map' : false,
+    // devtool: shouldUseSourceMap ? 'source-map' : false,
+    devtool: false,
     // In production, we only want to load the polyfills and the app code.
     entry: generatedEntry,
     output: {
@@ -315,7 +316,7 @@ module.exports = {
             algorithm: "gzip",
             test: /\.js$|\.css$|\.html$/,
             threshold: 10240,
-            minRatio: 0,
+            minRatio: 0.8
         }),
 
         // Note: this won't work without ExtractTextPlugin.extract(..) in `loaders`.

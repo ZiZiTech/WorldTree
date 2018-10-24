@@ -1,6 +1,8 @@
 // import Logger from './Logger';
 import superagent from 'superagent';
 import globalConfig from '../config';
+import cabin from './Logger'
+
 
 // const logger = new Logger('Ajax');
 
@@ -27,12 +29,17 @@ class Ajax {
      * @returns {Promise}
      */
     requestWrapper(method, url, {params, data, headers} = {}) {
-        // logger.debug('method=%s, url=%s, params=%o, data=%o, headers=%o', method, url, params, data, headers);
+        cabin.info(
+            'method=' + JSON.stringify(method) + "\n" +
+            "url=" + url + "\n" +
+            "params=" + JSON.stringify(params) + "\n" +
+            "data=" + JSON.stringify(data) + "\n" +
+            "headers=" + JSON.stringify(headers)
+        );
         return new Promise((resolve, reject) => {
             const tmp = superagent(method, url);
             // 是否是跨域请求
             if (globalConfig.isCrossDomain()) {
-                console.log("isCrossDomainisCrossDomainisCrossDomain")
                 tmp.withCredentials();
                 // tmp.set('Access-Control-Allow-Origin', "http://192.168.202.234:3000/");
                 // tmp.set('Access-Control-Allow-Credentials', 'true')
@@ -53,7 +60,6 @@ class Ajax {
             }
             // body中发送的数据
             if (data) {
-                console.log("requestWrapper data = " + JSON.stringify(data));
                 tmp.send(data);
             }
             // 包装成promise
@@ -78,9 +84,8 @@ class Ajax {
     post(url, data, opts = {}) {
         const headers = {
             'Content-Type': 'application/json',
-            "openId": 'wjswr123',
+            // "openId": 'wjswr1234',
         };
-        console.log("post data = " + JSON.stringify(data));
         return this.requestWrapper('POST', url, {...opts, data, headers});
     }
 
@@ -90,7 +95,7 @@ class Ajax {
     //         "FinanceAuth": token,
     //         "openId":'wjswr123',
     //     };
-    //     console.log("post data = " + JSON.stringify(data));
+    //     cabin.info("post data = " + JSON.stringify(data));
     //     return this.requestWrapper('POST', url, {...opts, data, headers});
     // }
 
@@ -105,8 +110,6 @@ class Ajax {
     getSmsCode(phoneNumber) {
         return this.post(`${globalConfig.getAPIPath()}finance/login/gst/getLoginCode`, {"phoneNumber": phoneNumber});
     }
-
-
 
 
     //绑定手机号
@@ -183,11 +186,16 @@ class Ajax {
         const headers = {
             "Authorization": "APPCODE 30cdc788760a48f5ba391c22473b396c",
         };
-        console.log("post data = " + JSON.stringify(data));
+        cabin.info("post data = " + JSON.stringify(data));
         return this.requestWrapper('POST', `${globalConfig.recUrl}`, {
             data,
             headers
         });
+    }
+
+    //获取微信授权信息
+    getWXConfigInfo(url) {
+        return this.post(`${globalConfig.getAPIPath()}wx/getWXConfigInfo`, {"url": url});
     }
 }
 

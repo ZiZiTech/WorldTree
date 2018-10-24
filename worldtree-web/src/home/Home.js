@@ -12,12 +12,13 @@ import {
     Modal, Stepper
 } from "antd-mobile";
 import EXIF from 'exif-js'
-import {isWeixin, Trim, ValidateMobile, GetQueryString} from "../utils";
+import {Trim, ValidateMobile, GetQueryString} from "../utils";
 import ajax from "../utils/ajax";
 import head from './images/head.png'
 import ProductItem from "../compont/ProductItem";
 import CodeBox from "../compont/CodeBox"
 import IconMine from './images/icon-mine.png'
+
 
 import IconLocation from './images/icon-location.png'
 import IconLocationBlack from './images/icon-location-black.png'
@@ -28,7 +29,10 @@ import IconRealName from './images/icon-realname.png'
 import ImageProductDetail01 from './images/image-product-detail01.png'
 import BgProductItem from './images/bg-product-item.png'
 import BgUploadId from './images/bg-upload-id.png'
+import cabin from '../utils/Logger';
 
+const wx = window.jWeixin || require('weixin-js-sdk')
+const urlencode = require('urlencode');
 const Item = List.Item;
 
 const smsRequestInterval = 60;
@@ -36,11 +40,13 @@ const saleId = 1;
 const productCode = "100010000";
 const totalCount = 300;
 const eachCountFigure = 20000;
+
 const code = GetQueryString('code')
 const nav_to = GetQueryString('nav_to')
 
 
 const maxSize = 10 * 1024; // 10MB
+const compressMaxSize = 2 * 1024;
 const typeArray = ['jpeg', 'jpg', 'png'];
 
 // const Wechat = require('wechat-jssdk');
@@ -61,15 +67,14 @@ function closest(el, selector) {
 class Home extends Component {
     constructor(props) {
         super(props);
-        console.log(JSON.stringify(this));
         this.state = {
             //控制页面显示标记
-            toHome: true,
+            toHome: false,
             toMine: false,
             toLogin: false,
             toAttentionProductList: false,
             toBookedProductList: false,
-            toUserCertification: false,
+            toUserCertification: true,
             toAttentionProductDetail: false,
             toBookedProductDetail: false,
 
@@ -97,7 +102,7 @@ class Home extends Component {
             //预约份额
             bookCount: 1,
             bookTime: '',
-
+            startSaleTime: '2018/12/14',
             //是否关注了saleId为1的产品
             attentionSale: false,
             //是否预约了saleId为1的产品
@@ -114,6 +119,8 @@ class Home extends Component {
             totalBookedCount: 0,
             //我预约份数
             myBookedCount: 0,
+
+            needCompress: true,
         };
 
         this.showPage = this.showPage.bind(this);
@@ -138,11 +145,12 @@ class Home extends Component {
         this.handleRecognize = this.handleRecognize.bind(this);
         this.transformFileToDataUrl = this.transformFileToDataUrl.bind(this);
         this.previewResponse = this.previewResponse.bind(this);
-
+        this.configWechatJSSDK = this.configWechatJSSDK.bind(this);
+        this.compress = this.compress.bind(this);
     }
 
     previewResponse(res) {
-        if (res == undefined) {
+        if (res === undefined) {
             Toast.fail("服务器出错");
             return;
         } else {
@@ -152,6 +160,109 @@ class Home extends Component {
                 return;
             }
         }
+    }
+
+    compress(data, file, callback) {
+        /**
+         * 压缩图片
+         * @param data file文件 数据会一直向下传递
+         * @param callback 下一步回调
+         */
+
+        cabin.info("compress  begin" + JSON.stringify(data))
+        const compress = true;
+        const compressionRatio = 20;
+        const imgCompassMaxSize = 200 * 1024; // 超过 200k 就压缩
+        // const imgFile = data.file;
+        // const orientation = data.orientation;
+        const img = new window.Image();
+
+        img.onload = function () {
+
+            let drawWidth, drawHeight, width, height;
+
+            drawWidth = this.naturalWidth;
+            drawHeight = this.naturalHeight;
+
+            // 改变一下图片大小
+            let maxSide = Math.max(drawWidth, drawHeight);
+
+            if (maxSide > 1024) {
+                let minSide = Math.min(drawWidth, drawHeight);
+                minSide = minSide / maxSide * 1024;
+                maxSide = 1024;
+                if (drawWidth > drawHeight) {
+                    drawWidth = maxSide;
+                    drawHeight = minSide;
+                } else {
+                    drawWidth = minSide;
+                    drawHeight = maxSide;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = width = drawWidth;
+            canvas.height = height = drawHeight;
+            // 判断图片方向，重置 canvas 大小，确定旋转角度，iphone 默认的是 home 键在右方的横屏拍摄方式
+            switch (1) {
+                // 1 不需要旋转
+                case 1: {
+                    ctx.drawImage(img, 0, 0, drawWidth, drawHeight);
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    break;
+                }
+                // iphone 横屏拍摄，此时 home 键在左侧 旋转180度
+                case 3: {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.translate(0, 0);
+                    ctx.rotate(Math.PI);
+                    ctx.drawImage(img, -width, -height, width, height);
+                    break;
+                }
+                // iphone 竖屏拍摄，此时 home 键在下方(正常拿手机的方向) 旋转90度
+                case 6: {
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.translate(0, 0);
+                    ctx.rotate(90 * Math.PI / 180);
+                    ctx.drawImage(img, 0, -height, width, height);
+                    break;
+                }
+                // iphone 竖屏拍摄，此时 home 键在上方 旋转270度
+                case 8: {
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.translate(0, 0);
+                    ctx.rotate(-90 * Math.PI / 180);
+                    ctx.drawImage(img, -width, 0, width, height);
+                    break;
+                }
+                default: {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    break;
+                }
+            }
+
+            let compressedDataUrl;
+
+            if (compress && file.length > imgCompassMaxSize) {
+                compressedDataUrl = canvas.toDataURL(file.type, (compressionRatio / 100));
+            } else {
+                compressedDataUrl = canvas.toDataURL(file.type, 1);
+            }
+            cabin.info("compress  end" + JSON.stringify(compressedDataUrl))
+
+            callback(compressedDataUrl);
+            // return compressedDataUrl;
+        }
+
+        img.src = data;
     }
 
     handleRecognize() {
@@ -164,6 +275,11 @@ class Home extends Component {
             Toast.fail("请上传身份证头像面");
             return;
         }
+
+        Toast.loading('识别中，请稍等...', 0, () => {
+            //cabin.info('Load complete !!!');
+        });
+
         const backData =
             {
                 "configure": "{\"side\":\"back\"}",
@@ -172,11 +288,15 @@ class Home extends Component {
 
 
         this.recognizeID(backData).catch(async (err) => {
-            console.log(JSON.stringify(err.text));
+            if ('Error: BAD REQUEST' === err.toString()) {
+                Toast.hide();
+                Toast.fail("识别失败，请确认是否上传正确")
+                return;
+            }
             const recognizeInfo = JSON.parse(err.text);
-            console.log(JSON.stringify(recognizeInfo));
+            cabin.info(JSON.stringify(recognizeInfo));
             //识别成功
-            if (recognizeInfo != undefined) {
+            if (recognizeInfo !== undefined) {
                 if (recognizeInfo.success) {//识别成功
                     const faceData =
                         {
@@ -184,10 +304,10 @@ class Home extends Component {
                             "image": this.state.faceIdImageBase64Data.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
                         };
                     this.recognizeID(faceData).catch(async (err2) => {
-                        console.log(JSON.stringify(err2.text));
+                        cabin.info(JSON.stringify(err2.text));
                         const recognizeInfo2 = JSON.parse(err2.text);
-                        console.log(JSON.stringify(recognizeInfo2));
-                        if (recognizeInfo2 != undefined) {
+                        cabin.info(JSON.stringify(recognizeInfo2));
+                        if (recognizeInfo2 !== undefined) {
                             if (recognizeInfo2.success) {//识别成功
                                 const idInfos =
                                     {
@@ -201,26 +321,32 @@ class Home extends Component {
                                     }
 
                                 const res = await ajax.certificationUser(idInfos);
-                                if (res != undefined && res.code === 10000) {
+                                if (res !== undefined && res.code === 10000) {
+                                    Toast.hide();
                                     Toast.info("识别成功");
                                     this.setState({
                                         faceRecognized: true,
                                         backRecognized: true,
                                     })
                                 } else {
+                                    Toast.hide();
                                     Toast.fail("识别失败")
                                 }
                             } else {//识别失败
+                                Toast.hide();
                                 Toast.info("身份证头像面识别失败");
                             }
                         } else {//识别失败
+                            Toast.hide();
                             Toast.info("身份证头像面识别失败");
                         }
                     });
                 } else {//识别失败
+                    Toast.hide();
                     Toast.info("身份证国徽面识别失败");
                 }
             } else {//识别失败
+                Toast.hide();
                 Toast.info("身份证国徽面识别失败");
             }
         });
@@ -228,7 +354,7 @@ class Home extends Component {
 
     async recognizeID(data) {
         const res = await ajax.recognizeID(data);
-        console.log("recognizeID res = " + JSON.stringify(res));
+        cabin.info("recognizeID res = " + JSON.stringify(res));
     }
 
     onFaceIDImagesChange(event) {
@@ -244,6 +370,7 @@ class Home extends Component {
          * 图片上传流程的第一步
          * @param data file文件
          */
+
         return new Promise((resolve, reject) => {
             let orientation;
 
@@ -267,9 +394,8 @@ class Home extends Component {
     }
 
     onIDImagesChange(event, side) {
-        console.log(JSON.stringify(event.target.files));
         const selectedFiles = Array.prototype.slice.call(event.target.files).map((item) => (item));
-        console.log(JSON.stringify(selectedFiles))
+        cabin.info(JSON.stringify(selectedFiles))
         let imgPass = {typeError: false, sizeError: false};
 
         // 循环遍历检查图片 类型、尺寸检查
@@ -281,6 +407,12 @@ class Home extends Component {
             // 图片尺寸检查
             if (item.size > maxSize * 1024) {
                 imgPass.sizeError = true;
+            } else {
+                if (item.size > compressMaxSize) {
+                    this.setState({
+                        needCompress: true,
+                    })
+                }
             }
         });
 
@@ -317,7 +449,8 @@ class Home extends Component {
 
         const image = selectedFiles[0];
 
-        if (image == undefined && image === '') {
+
+        if (image === undefined && image === '') {
             return;
         }
 
@@ -339,66 +472,45 @@ class Home extends Component {
 
         this.transformFileToDataUrl(image)
             .then((data) => {
-                console.log(data)
-                this.setState({
-                    [vUploadImageKey]: data,
-                    [vUploadImageFlagKey]: true,
+                cabin.info("transformFileToDataUrl：" + data)
+                this.compress(data, image, (newData) => {
+                    this.setState({
+                        [vUploadImageKey]: newData,
+                        // [vUploadImageKey]: data,
+                        [vUploadImageFlagKey]: true,
+                    })
                 })
             });
-
-        // switch (side) {
-        //     case 'face':
-        //         this.setState({
-        //             faceIdImages: vFiles,
-        //         }, () => {
-        //             if (vFiles.length > 0) {
-        //
-        //             }
-        //         });
-        //         break;
-        //     case 'back':
-        //         this.setState({
-        //             backIdImages: vFiles,
-        //         }, () => {
-        //             if (vFiles.length > 0) {
-        //                 const data =
-        //                     {
-        //                         "configure": "{\"side\":\"back\"}",
-        //                         "image": vFiles[0].url.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''),
-        //                     };
-        //                 this.handleRecognize(data, side);
-        //             }
-        //         });
-        //         break;
-        //     default:
-        //         break
-        // }
     }
+
 
     async bookProduct() {
         const res = await ajax.bookProduct(productCode, saleId, this.state.bookCount);
-        console.log("bookProduct res = " + JSON.stringify(res));
+        cabin.info("bookProduct res = " + JSON.stringify(res));
         this.previewResponse(res);
-        let vBookSale = false;
-        if (res.code != undefined && res.code === 10000) {
-            vBookSale = true;
+        if (res !== undefined && res.code != undefined) {
+            if (res.code === 10000) {
+                this.setState({
+                    bookSale: true,
+                }, () => {
+                    this.showPage('toAttentionProductDetail')
+                })
+            } else {
+                Toast.fail("请求出错");
+            }
+        } else {
+            Toast.fail("请求出错");
         }
-        this.setState({
-            bookSale: vBookSale,
-        }, () => {
-            this.showPage('toAttentionProductDetail')
-        })
     }
 
     async tryToAttentionProductDetail() {
         const res = await ajax.getProductBookStatus(productCode, saleId);
-        console.log("tryToAttentionProductDetail res = " + JSON.stringify(res));
+        cabin.info("tryToAttentionProductDetail res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
+        if (res !== undefined && res.code === 10000) {
             this.setState({
                 bookSale: res.result.booked,
             }, () => {
-                console.log("tryToBookProductList bookTime = " +this.state.bookTime);
                 this.showPage('toAttentionProductDetail')
             });
         } else {
@@ -408,9 +520,9 @@ class Home extends Component {
 
     async tryToAttentionProductList() {
         const res = await ajax.getProductDetail(productCode, saleId);
-        console.log("tryToAttentionProductList res = " + JSON.stringify(res));
+        cabin.info("tryToAttentionProductList res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
+        if (res !== undefined && res.code === 10000) {
             this.setState({
                 attentionSale: res.result.attention,
                 totalBookedCount: res.result.bookedCount,
@@ -418,24 +530,25 @@ class Home extends Component {
                 this.showPage('toAttentionProductList')
             })
         } else {
-            console.log("请求失败");
+            Toast.fail("请求失败");
         }
     }
 
     async tryToBookProductList() {
         const res = await ajax.getProductBookStatus(productCode, saleId);
-        console.log("tryToBookProductList res = " + JSON.stringify(res));
+        cabin.info("tryToBookProductList res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
+        if (res !== undefined && res.code === 10000) {
             this.setState({
                 bookSale: res.result.booked,
                 myBookedCount: res.result.bookCount,
                 bookTime: res.result.bookTime,
+                startSaleTime: res.result.startSaleTime,
             }, () => {
                 this.showPage('toBookedProductList')
             })
         } else {
-            console.log("请求失败");
+            Toast.fail("请求失败");
         }
 
     }
@@ -448,9 +561,9 @@ class Home extends Component {
         const {invitationCode} = this.state;
         if (invitationCode != undefined && '' !== invitationCode) {
             const res = await ajax.verifyInvitationCode(productCode, saleId, invitationCode);
-            console.log("verifyInvitationCode res = " + JSON.stringify(res));
+            cabin.info("verifyInvitationCode res = " + JSON.stringify(res));
             this.previewResponse(res);
-            if (res != undefined && res.code === 10000) {
+            if (res !== undefined && res.code === 10000) {
                 if (typeof window !== undefined) {
                     window.location.href = "./product_info.html?p_id=1";
                 } else {
@@ -492,12 +605,12 @@ class Home extends Component {
      * @returns {Promise<void>}
      */
     async checkUserCertificationStatus() {
-        console.log("checkUserCertificationStatus")
+        cabin.info("checkUserCertificationStatus")
         const res = await ajax.getUserCertification();
-        console.log("checkUserCertificationStatus res = " + JSON.stringify(res));
+        cabin.info("checkUserCertificationStatus res = " + JSON.stringify(res));
         this.previewResponse(res);
         let vUserCertification = false;
-        if (res != undefined && res.code === 10000 && res.result.userCertification) {
+        if (res !== undefined && res.code === 10000 && res.result.userCertification) {
             vUserCertification = true;
         }
         this.setState({
@@ -510,11 +623,11 @@ class Home extends Component {
      * @returns {Promise<void>}
      */
     async toProjectDetail() {
-        console.log("toProjectDetail")
+        cabin.info("toProjectDetail")
         const res = await ajax.getProductDetail(productCode, saleId);
-        console.log("getProductDetail res = " + JSON.stringify(res));
+        cabin.info("getProductDetail res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res.code != undefined && res.code === 11003) {
+        if (res.code !== undefined && res.code === 11003) {
             this.setState({
                 invitationCodeModal: true,
             })
@@ -555,8 +668,8 @@ class Home extends Component {
         if (ValidateMobile(Trim(this.state.phone, 'g'))) {
             const res = await ajax.getSmsCode(this.state.phone);
             this.previewResponse(res);
-            console.log("getSmsCode res = " + JSON.stringify(res));
-            if (res != undefined && res.code === 10000) {
+            cabin.info("getSmsCode res = " + JSON.stringify(res));
+            if (res.code !== undefined && res.code === 10000) {
                 this.tick()
             } else {
                 Toast.info("获取验证码失败")
@@ -635,27 +748,6 @@ class Home extends Component {
         })
     }
 
-    // /**
-    //  * 尝试登录
-    //  * @param nextStep
-    //  * @returns {Promise<void>}
-    //  */
-    // async tryToLogin(nextStep) {
-    //     const res = await ajax.loginByOpenId(this.state.openId);
-    //     console.log("tryToLogin res = " + JSON.stringify(res));
-    //     if (res != undefined && res.code === 10000) {
-    //         this.setState({
-    //             token: res.result.token,
-    //         }, () => {
-    //             if (typeof nextStep === "function") {
-    //                 nextStep();
-    //             }
-    //         })
-    //     } else {
-    //         this.showPage('toLogin')
-    //     }
-    // }
-
     /**
      * 尝试绑定微信openId
      * @returns {Promise<void>}
@@ -663,36 +755,76 @@ class Home extends Component {
     async tryToBindOpenId() {
         const param = {"vCode": this.state.smsCode, "phoneNumber": this.state.phone};
         const res = await ajax.bindWechat(param);
-        console.log("tryToBindOpenId res = " + JSON.stringify(res));
+        cabin.info("tryToBindOpenId res = " + JSON.stringify(res));
         this.previewResponse(res);
-        if (res != undefined && res.code === 10000) {
-            this.setState({
-                token: res.result.token,
-            }, () => {
+        if (res !== undefined) {
+            if (res.code === 10000) {
                 this.showPage('toMine')
-            })
+            } else if (res.code === 10015) {
+                Toast.info("请重新获取短信验证码")
+            }
         } else {
             Toast.info("登录失败")
         }
     }
 
-    componentDidMount() {
-        console.log(JSON.stringify(code))
+    async configWechatJSSDK() {
+        // const url = urlencode(window.location.href.split('#')[0]);
+        const url = window.location.href.split('#')[0];
+        cabin.info(url)
+        const res = await ajax.getWXConfigInfo(url);
+        cabin.info(JSON.stringify(res))
+        this.previewResponse(res);
+        if (res !== undefined && res.code !== undefined && res.code === 10000) {
+            wx.config({
+                debug: false,
+                appId: res.result.appId,
+                timestamp: res.result.timestamp,
+                nonceStr: res.result.nonceStr,
+                signature: res.result.signature,
+                jsApiList: [
+                    // 'updateTimelineShareData',
+                    // 'updateAppMessageShareData',
+                    'hideMenuItems',
+                ]
+            });
 
-        if (nav_to != undefined && nav_to !== '') {
-            switch (nav_to) {
-                case 'login':
-                    break;
-                    this.showPage('toLogin');
-                default:
-                    break
-            }
+            wx.ready(function () {
+                wx.hideMenuItems({
+                    menuList: ["menuItem:share:appMessage", "menuItem:share:timeline", "menuItem:share:qq", "menuItem:share:weiboApp", "menuItem:share:QZone"] // 要隐藏的菜单项，只能隐藏“传播类”和“保护类”按钮，所有menu项见附录3
+                });
+            });
+
+            wx.error(function (res) {
+                // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。-->
+                cabin.info("wx error " + JSON.stringify(res));
+            });
+        } else {
+            Toast.info("获取微信配置失败")
         }
     }
 
     componentWillUnMount() {
         clearInterval(this.interval);
         this.interval = null;
+    }
+
+    componentDidMount() {
+
+        this.configWechatJSSDK();
+
+        if (nav_to !== undefined && nav_to !== '') {
+            switch (nav_to) {
+                case 'login':
+                    this.showPage('toLogin');
+                    break;
+                case 'mine':
+                    this.showPage('toMine');
+                    break;
+                default:
+                    break
+            }
+        }
     }
 
     onModalClose(key) {
@@ -739,7 +871,107 @@ class Home extends Component {
                             }}/>
                         ]}
                     >大衍金融</NavBar>
-                    <ProductItem toProjectDetail={this.toProjectDetail}/>
+                    <div className="content">
+                        <ProductItem project="江苏无锡政府债转股项目" location="江苏·无锡" bgTop={require('./images/bg-top-wx.png')}
+                                     toProjectDetail={this.toProjectDetail}/>
+                        <ProductItem project="浙江温州政府债转股项目" location="浙江·温州" bgTop={require('./images/bg-top-wz.png')}
+                                     toProjectDetail={() => {
+                                         Toast.info("即将开放预约", 1)
+                                     }}/>
+                        <ProductItem project="四川成都政府债转股项目" location="四川·成都" bgTop={require('./images/bg-top-cd.png')}
+                                     toProjectDetail={() => {
+                                         Toast.info("即将开放预约", 1)
+                                     }}/>
+                        <ProductItem project="陕西西安政府债转股项目" location="陕西·西安" bgTop={require('./images/bg-top-xa.png')}
+                                     toProjectDetail={() => {
+                                         Toast.info("即将开放预约", 1)
+                                     }}/>
+                        <ProductItem project="广东深圳政府债转股项目" location="广东·深圳" bgTop={require('./images/bg-top-sz.png')}
+                                     toProjectDetail={() => {
+                                         Toast.info("即将开放预约", 1)
+                                     }}/>
+                        <ProductItem project="浙江杭州政府债转股项目" location="浙江·杭州" bgTop={require('./images/bg-top-hz.png')}
+                                     toProjectDetail={() => {
+                                         Toast.info("即将开放预约", 1)
+                                     }}/>
+
+
+                        <div style={{
+                            backgroundColor: '#ffffff',
+                            marginTop: '10px',
+                            padding: '35px 25px 35px 25px',
+                            marginBottom: '20px'
+                        }}>
+                            <Flex>
+                                <Flex.Item style={{flex: 1, textAlign: 'right'}}>
+                                    <img style={{width: '25px', height: '25px'}}
+                                         src={require('./images/icon-safe.png')}/>
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9}}>
+                                    <div style={{fontSize: '1.2em', fontWeight: 'bold'}}> 更安全</div>
+                                </Flex.Item>
+                            </Flex>
+                            <WhiteSpace/>
+                            <Flex>
+                                <Flex.Item style={{flex: 1}}>
+
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9, fontSize: '0.8em', color: '#7A7A7A', lineHeight: '1.5em'}}>
+                                    作为分布式记账平台的核心技术，区块链系统
+                                    利用了分布式系统、密码学、博弈论、网络协
+                                    议等，提供更加安全的财富服务。从唯一性、
+                                    密码、身份验证、传输等方面层层把关，让整
+                                    个理财过程让人放心。
+                                </Flex.Item>
+                            </Flex>
+                            <WhiteSpace/>
+                            <WhiteSpace/>
+                            <Flex>
+                                <Flex.Item style={{flex: 1, textAlign: 'right'}}>
+                                    <img style={{width: '25px', height: '25px'}}
+                                         src={require('./images/icon-lucency.png')}/>
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9}}>
+                                    <div style={{fontSize: '1.2em', fontWeight: 'bold'}}> 更透明</div>
+                                </Flex.Item>
+                            </Flex>
+                            <WhiteSpace/>
+                            <Flex>
+                                <Flex.Item style={{flex: 1}}>
+
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9, fontSize: '0.8em', color: '#7A7A7A', lineHeight: '1.5em'}}>
+                                    去中心化是平台的技术特色。多节点的网络副
+                                    本提供给所有用户更加放心的透明体验，除此
+                                    之外，不同地理位置、不同服务商以及不同利
+                                    益体的部署方式让数据丢失风险降低到最低。
+                                </Flex.Item>
+                            </Flex>
+                            <WhiteSpace/>
+                            <WhiteSpace/>
+                            <Flex>
+                                <Flex.Item style={{flex: 1, textAlign: 'right'}}>
+                                    <img style={{width: '25px', height: '25px'}}
+                                         src={require('./images/icon-better.png')}/>
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9}}>
+                                    <div style={{fontSize: '1.2em', fontWeight: 'bold'}}> 更优质</div>
+                                </Flex.Item>
+                            </Flex>
+                            <WhiteSpace/>
+                            <Flex>
+                                <Flex.Item style={{flex: 1}}>
+
+                                </Flex.Item>
+                                <Flex.Item style={{flex: 9, fontSize: '0.8em', color: '#7A7A7A', lineHeight: '1.5em'}}>
+                                    平台与多家优质合规资质单位合作，为用户提
+                                    供更多的金融产品信息。尤其是，平台率先推
+                                    出地方政府债转股项目，优质、稳定、收益高，
+                                    是时代理财的趋势。
+                                </Flex.Item>
+                            </Flex>
+                        </div>
+                    </div>
                 </div>
 
                 <div style={this.state.toMine ? {width: '100%'} : {display: 'none'}}>
@@ -864,7 +1096,7 @@ class Home extends Component {
                             }}
                             onChange={codeArray => {
                                 const phone = codeArray.join('');
-                                console.log(phone);
+                                cabin.info(phone);
                                 this.setState({
                                     phoneIsCorrect: ValidateMobile(phone),
                                     phone: phone,
@@ -890,7 +1122,7 @@ class Home extends Component {
                             }}
                             onChange={codeArray => {
                                 const smsCode = Array.prototype.join.call(codeArray, '')
-                                console.log(smsCode);
+                                cabin.info(smsCode);
                                 let isSmsCodeCorrect = false;
                                 if (smsCode != undefined && smsCode !== '' && (smsCode.length === 6)) {
                                     isSmsCodeCorrect = true;
@@ -939,22 +1171,6 @@ class Home extends Component {
                             fontSize: '12px',
                             marginBottom: '10px',
                             marginLeft: '10%'
-                        }}>身份证国徽面：
-                        </div>
-                        <img style={{width: '80%', height: '200px'}}
-                             src={this.state.backImageLoaded ? this.state.backIdImageBase64Data : BgUploadId} alt=""
-                             onClick={onBackUploadPress}/>
-                        <WhiteSpace/>
-                        <input type="button" className="reloadIdImageButton" value="重新上传"
-                               style={(!this.state.backImageLoaded || (this.state.backRecognized && this.state.faceRecognized)) ? {display: 'none'} : {}}
-                               onClick={onBackUploadPress}/>
-                        <WhiteSpace/>
-
-                        <div style={{
-                            textAlign: 'left',
-                            fontSize: '12px',
-                            marginBottom: '10px',
-                            marginLeft: '10%'
                         }}>身份证头像面：
                         </div>
                         <img style={{width: '80%', height: '200px', backgroundColor: 'transparent'}}
@@ -964,6 +1180,21 @@ class Home extends Component {
                         <input type="button" className="reloadIdImageButton" value="重新上传"
                                style={(!this.state.faceImageLoaded || (this.state.backRecognized && this.state.faceRecognized)) ? {display: 'none'} : {}}
                                onClick={onFaceUploadPress}/>
+                        <WhiteSpace/>
+                        <div style={{
+                            textAlign: 'left',
+                            fontSize: '12px',
+                            marginBottom: '10px',
+                            marginLeft: '10%'
+                        }}>身份证国徽面：
+                        </div>
+                        <img style={{width: '80%', height: '200px'}}
+                             src={this.state.backImageLoaded ? this.state.backIdImageBase64Data : BgUploadId} alt=""
+                             onClick={onBackUploadPress}/>
+                        <WhiteSpace/>
+                        <input type="button" className="reloadIdImageButton" value="重新上传"
+                               style={(!this.state.backImageLoaded || (this.state.backRecognized && this.state.faceRecognized)) ? {display: 'none'} : {}}
+                               onClick={onBackUploadPress}/>
                         <WhiteSpace/>
                         <WhiteSpace/>
                         <WhiteSpace/>
@@ -1121,7 +1352,11 @@ class Home extends Component {
                                     <Flex>
                                         <Flex.Item><span>预约认筹金额 {this.state.myBookedCount * eachCountFigure}</span></Flex.Item>
                                         <Flex.Item
-                                            style={{textAlign: 'right'}}><span>预约开发时间 2018/12/14</span></Flex.Item>
+                                            style={{textAlign: 'right'}}>
+                                            <span>
+                                                开放认筹时间 {this.state.startSaleTime}
+                                                </span>
+                                        </Flex.Item>
                                     </Flex>
                                 </div>
                             </div>
@@ -1307,10 +1542,10 @@ class Home extends Component {
                                 }}>
                                     <div style={{
                                         fontWeight: 'bold',
-                                        fontSize: '3em',
-                                        lineHeight: '70%'
+                                        fontSize: '2.5em',
+                                        lineHeight: '80%'
                                     }}>
-                                        ¥1000000
+                                        ¥{this.state.bookCount * eachCountFigure}
                                     </div>
                                     <div style={{
                                         fontSize: '12px', color: '#9c9c9c', marginTop: '10px'
@@ -1323,7 +1558,10 @@ class Home extends Component {
                             <div style={{marginTop: '-20px'}}>
                                 <Flex>
                                     <Flex.Item style={{flex: 5}}>
-                                        <div style={{fontSize: '12px', color: '#9c9c9c'}}>剩余数量 300</div>
+                                        <div style={{
+                                            fontSize: '12px',
+                                            color: '#9c9c9c'
+                                        }}>剩余数量 {300 - this.state.totalBookedCount - this.state.bookCount}</div>
                                     </Flex.Item>
                                     <Flex.Item style={{flex: 2}}>
                                         <div style={{
@@ -1338,7 +1576,7 @@ class Home extends Component {
                                         <Stepper
                                             style={{width: '100%',}}
                                             showNumber
-                                            max={10}
+                                            max={(this.state.totalBookedCount > 150) ? (300 - this.state.totalBookedCount - this.state.bookCount) : 150}
                                             min={1}
                                             defaultValue={1}
                                             value={this.state.bookCount}
@@ -1387,7 +1625,6 @@ class Home extends Component {
 
                     </div>
                 </Modal>
-
             </div>
 
         );

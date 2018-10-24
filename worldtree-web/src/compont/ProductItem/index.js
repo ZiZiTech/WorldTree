@@ -3,16 +3,15 @@ import {WhiteSpace, Flex} from "antd-mobile";
 import './index.css';
 import IconLocation from './images/icon-location.png'
 import IconLogo from './images/icon-logo.png'
-import BgTop from './images/bg-top.png'
 import BgBottom from './images/bg-bottom.png'
 
 class ProductItem extends PureComponent {
-
+//惠山洛社政府债转股项目
     render() {
         return (
             <div className="card-container" onClick={this.props.toProjectDetail}>
                 <div className="card-body">
-                    <img src={BgTop} alt=""
+                    <img src={this.props.bgTop} alt=""
                          style={{
                              width: '100%'
                          }}/>
@@ -32,20 +31,16 @@ class ProductItem extends PureComponent {
                             right: 10,
                             bottom: 10
                         }}>
-                            <div style={{flex: 8, float: 'left'}}>
-                                <span style={{fontSize: '0.8em'}}>太平洋东星债转股优先级计划4号</span>
+                            <div style={{flex: 2, float: 'left'}}>
+                                <span style={{fontSize: '1.1em', fontWeight: 'bold'}}>{this.props.project}</span>
                             </div>
-                            <div style={{flex: 3}}>
-                                <div className="status-tag">火爆预约中</div>
-                            </div>
-                            <div style={{flex: 4}}>
+                            <div style={{flex: 1}}>
                                 <div style={{
                                     textAlign: 'right',
-                                    fontSize: '0.7em',
+                                    fontSize: '0.8em',
                                 }}>
                                     <span>年化收益</span>&nbsp;
-                                    <span style={{fontSize: '1.2em'}}>6%</span>&nbsp;
-                                    <span>起</span>
+                                    <span style={{fontSize: '1.4em', fontWeight: 'bold'}}>6%</span>
                                 </div>
                             </div>
                         </div>
@@ -68,11 +63,8 @@ class ProductItem extends PureComponent {
                         <Flex.Item style={{flex: 1, textAlign: 'center'}}>
                             <img style={{width: '10px', height: 'auto'}} src={IconLocation} alt=""/>
                         </Flex.Item>
-                        <Flex.Item style={{flex: 3, textAlign: 'left', marginLeft: '-8px'}}>
-                            <span>江苏·无锡</span>
-                        </Flex.Item>
-                        <Flex.Item style={{flex: 4}}>
-                            <span>募集金额 600万</span>
+                        <Flex.Item style={{flex: 6, textAlign: 'left', marginLeft: '-8px'}}>
+                            <span>{this.props.location}</span>
                         </Flex.Item>
                         <Flex.Item style={{flex: 1, textAlign: 'center'}}>
                             <img style={{width: '13px', height: 'auto'}} src={IconLogo} alt=""/>
