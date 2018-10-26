@@ -11,15 +11,12 @@ import ImageProductDetail06 from './images/image-product-detail06.png'
 import BgProductItem from './images/bg-product-item.png'
 import ImageShare from './images/image-share.jpeg'
 import ajax from "../utils/ajax";
-import {GetQueryString} from "../utils";
 import cabin from '../utils/Logger';
 const saleId = 1;
 const productCode = "100010000";
 const totalCount = 300;
 const eachCountFigure = 20000;
-const code = GetQueryString('code')
 const wx = window.jWeixin || require('weixin-js-sdk')
-const urlencode = require('urlencode');
 
 function closest(el, selector) {
     const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
@@ -142,7 +139,7 @@ class ProductInfo extends Component {
      */
     async getProductDetail() {
         const res = await ajax.getProductDetail(productCode, saleId);
-        //cabin.info("getProductDetail res = " + JSON.stringify(res));
+        cabin.info("getProductDetail res = " + JSON.stringify(res));
         this.previewResponse(res);
         if (res.code !== undefined) {
             if (res.code === 11003) {
@@ -333,7 +330,7 @@ class ProductInfo extends Component {
                                             textAlign: 'center'
                                         }}>
                                             <Progress
-                                                percent={(this.state.totalBookedCount / totalCount).toFixed(4) * 100}
+                                                percent={(this.state.totalBookedCount / totalCount * 100).toFixed(2)}
                                                 position="normal" unfilled={true}
                                                 appearTransition
                                                 style={{
@@ -351,7 +348,7 @@ class ProductInfo extends Component {
                                                 flex: 1,
                                                 paddingLeft: '10px'
                                             }}>
-                                                <span>{(this.state.totalBookedCount / totalCount).toFixed(4) * 100}%</span>
+                                                <span>{(this.state.totalBookedCount / totalCount * 100).toFixed(2)}%</span>
                                             </div>
                                         </div>
                                     </div>

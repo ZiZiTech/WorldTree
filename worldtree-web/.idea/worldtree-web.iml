@@ -3,6 +3,12 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/src/helper" />
+      <excludeFolder url="file://$MODULE_DIR$/src/login" />
+      <excludeFolder url="file://$MODULE_DIR$/src/pcenter" />
+      <excludeFolder url="file://$MODULE_DIR$/src/product" />
+      <excludeFolder url="file://$MODULE_DIR$/src/register" />
+      <excludeFolder url="file://$MODULE_DIR$/src/security" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
     </content>
