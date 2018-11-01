@@ -32,7 +32,7 @@ const productCode = "100010000";
 const totalCount = 300;
 const eachCountFigure = 20000;
 
-const nav_to = GetQueryString('nav_to')
+const navTo = GetQueryString('nav-to')
 
 const maxSize = 10 * 1024; // 10MB
 const compressMaxSize = 2 * 1024;
@@ -54,9 +54,9 @@ class Home extends Component {
         super(props);
         this.state = {
             //控制页面显示标记
-            toHome: false,
+            toHome: true,
             toMine: false,
-            toLogin: true,
+            toLogin: false,
             toAttentionProductList: false,
             toBookedProductList: false,
             toUserCertification: false,
@@ -136,11 +136,11 @@ class Home extends Component {
 
     previewResponse(res) {
         if (res === undefined) {
-            Toast.fail("服务器出错");
+            Toast.fail("服务器出错",1);
             return;
         } else {
             if (res.code === 10001) {
-                Toast.info("请先登录");
+                Toast.info("请先登录",1);
                 this.showPage('toLogin')
                 return;
             }
@@ -550,7 +550,7 @@ class Home extends Component {
             this.previewResponse(res);
             if (res !== undefined && res.code === 10000) {
                 if (typeof window !== undefined) {
-                    window.location.href = "./product_info.html?p_id=1";
+                    window.location.href = "./product-info.html?p_id=1";
                 } else {
                     Toast.info("系统异常")
                 }
@@ -618,7 +618,7 @@ class Home extends Component {
             })
         } else {
             if (typeof window !== undefined) {
-                window.location.href = "./product_info.html?p_id=1";
+                window.location.href = "./product-info.html?p_id=1";
             }
         }
     }
@@ -786,7 +786,7 @@ class Home extends Component {
                 cabin.info("wx error " + JSON.stringify(res));
             });
         } else {
-            Toast.info("获取微信配置失败")
+            Toast.fail("获取微信配置失败",1)
         }
     }
 
@@ -796,8 +796,8 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        if (nav_to !== undefined && nav_to !== '') {
-            switch (nav_to) {
+        if (navTo !== undefined && navTo !== '') {
+            switch (navTo) {
                 case 'login':
                     this.showPage('toLogin');
                     break;
@@ -866,7 +866,6 @@ class Home extends Component {
                                      toProjectDetail={() => {
                                          Toast.info("即将开放预约", 1)
                                      }}/>
-
 
                         <div style={{
                             backgroundColor: '#ffffff',

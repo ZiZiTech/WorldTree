@@ -45,7 +45,7 @@ const appArr = [
     // 'login',
     // 'register',
     // 'pcenter',
-    'product_info'
+    'product-info'
 ];
 
 // config after eject: we're in ./config/

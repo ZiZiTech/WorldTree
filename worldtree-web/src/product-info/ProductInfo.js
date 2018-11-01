@@ -12,6 +12,7 @@ import BgProductItem from './images/bg-product-item.png'
 import ImageShare from './images/image-share.jpeg'
 import ajax from "../utils/ajax";
 import cabin from '../utils/Logger';
+
 const saleId = 1;
 const productCode = "100010000";
 const totalCount = 300;
@@ -34,8 +35,6 @@ class ProductInfo extends Component {
         super(props);
         this.state = {
             carouseData: [ImageProductDetail01],
-            // openId: 'wjswr12356',
-            // hasBindWechat: false,
             invitationCodeModal: false,
             invitationCode: '',
             verityInvitationCodeCorrect: true,
@@ -55,12 +54,12 @@ class ProductInfo extends Component {
 
     previewResponse(res) {
         if (res === undefined) {
-            Toast.fail("服务器出错");
+            Toast.fail("服务器出错", 1);
             return;
         } else {
             if (res.code === 10001) {
-                Toast.info("请先登录");
-                window.location.href = "./home.html?nav_to=login";
+                Toast.info("请先登录", 1);
+                window.location.href = "./home.html?nav-to=login";
                 return;
             }
         }
@@ -77,14 +76,14 @@ class ProductInfo extends Component {
         this.previewResponse(res);
         if (res !== undefined && res.code === 10000) {
             if (!res.result.userCertification) {
-                window.location.href = "./home.html?nav_to=login";
+                window.location.href = "./home.html?nav-to=login";
             } else {
                 this.setState({
                     userCertification: res.result.userCertification,
                 })
             }
         } else {
-            Toast.info("请求失败");
+            Toast.info("请求失败", 1);
         }
 
     }
@@ -111,7 +110,7 @@ class ProductInfo extends Component {
                 })
             }
         } else {
-            Toast.info("验证码不能为空")
+            Toast.info("验证码不能为空", 1)
         }
     }
 
@@ -129,7 +128,7 @@ class ProductInfo extends Component {
                 productAttentionStatus: true,
             })
         } else {
-            Toast.info("关注失败")
+            Toast.fail("关注失败", 1)
         }
     }
 
@@ -155,7 +154,7 @@ class ProductInfo extends Component {
                 })
             }
         } else {
-            Toast.info("服务器出错")
+            Toast.info("服务器出错", 1)
         }
     }
 
@@ -168,31 +167,6 @@ class ProductInfo extends Component {
             invitationCode: e.target.value,
         })
     }
-
-    // /**
-    //  * 尝试登录
-    //  * @param nextStep
-    //  * @returns {Promise<void>}
-    //  */
-    // async tryToLogin() {
-    //     const res = await ajax.loginByOpenId(this.state.openId);
-    //     //cabin.info("tryToLogin res = " + JSON.stringify(res));
-    //     if (res != undefined && res.code === 10000) {
-    //         this.setState({
-    //             token: res.result.token,
-    //             hasBindWechat: true,
-    //         }, () => {
-    //             this.getProductDetail();
-    //         })
-    //     } else {
-    //         this.setState({
-    //             productAttentionStatus: false,
-    //             hasBindWechat: false,
-    //         }, () => {
-    //             this.getProductDetail();
-    //         })
-    //     }
-    // }
 
     onWrapTouchStart(e) {
         // fix touch to scroll background page on iOS
@@ -230,18 +204,18 @@ class ProductInfo extends Component {
                 wx.updateAppMessageShareData({
                     title: '江苏无锡政府债转股项目', // 分享标题
                     desc: '江苏无锡政府债转股项目介绍', // 分享描述
-                    link: 'http://dapa.inredata.com/finance/product_info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    link: 'http://dapa.inredata.com/finance/product-info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
                     imgUrl: {ImageShare}, // 分享图标
                 }, function (res) {//这里是回调函数
-                    Toast.info("分享成功")
+                    Toast.info("分享成功", 1)
                 });
 
                 wx.updateTimelineShareData({
                     title: '江苏无锡政府债转股项目', // 分享标题
-                    link: 'http://dapa.inredata.com/finance/product_info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
+                    link: 'http://dapa.inredata.com/finance/product-info.html?p_id=1', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
                     imgUrl: {ImageShare}, // 分享图标
                 }, function (res) {//这里是回调函数
-                    Toast.info("分享成功")
+                    Toast.info("分享成功", 1)
                 });
             });
 
@@ -250,16 +224,13 @@ class ProductInfo extends Component {
                 cabin.info("wx error " + JSON.stringify(res));
             });
         } else {
-            Toast.info("获取微信配置失败")
+            Toast.fail("获取微信配置失败", 1)
         }
     }
 
     componentDidMount() {
         this.configWechatJSSDK();
         this.getProductDetail();
-    }
-
-    componentWillUnMount() {
     }
 
     render() {
